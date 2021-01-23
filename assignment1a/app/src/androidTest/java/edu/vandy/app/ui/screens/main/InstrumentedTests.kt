@@ -11,8 +11,8 @@ import androidx.test.espresso.action.ViewActions
 import androidx.test.espresso.core.internal.deps.guava.collect.Iterables
 import androidx.test.espresso.matcher.ViewMatchers
 import androidx.test.espresso.matcher.ViewMatchers.assertThat
+import androidx.test.ext.junit.rules.ActivityScenarioRule
 import androidx.test.platform.app.InstrumentationRegistry
-import androidx.test.rule.ActivityTestRule
 import androidx.test.runner.lifecycle.ActivityLifecycleMonitorRegistry
 import androidx.test.runner.lifecycle.Stage
 import edu.vandy.R
@@ -47,7 +47,7 @@ abstract class InstrumentedTests {
 
     @Rule
     @JvmField
-    var activityTestRule = ActivityTestRule(MainActivity::class.java)
+    var activityRule = ActivityScenarioRule(MainActivity::class.java)
 
     abstract val beingManager: BeingManager.Factory.Type
     abstract val palantirManager: PalantiriManager.Factory.Type

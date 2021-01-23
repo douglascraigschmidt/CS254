@@ -297,8 +297,6 @@ public abstract class BeingComponent
             // Set state triggers snapshot generate/push mechanism.
             super.setState(state, e, message);
 
-            // TODOx: remove log stuff from this if/else and leave
-            // the single log before setState call.
             if (mDuration > 0) {
                 // Pause this being for the state's required duration
                 // before returning control to the calling Being.

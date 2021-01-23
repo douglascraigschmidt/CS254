@@ -1,45 +1,28 @@
 package admin
 
 import edu.vandy.simulator.utils.Assignment
-import edu.vandy.simulator.utils.Assignment.GRADUATE
-import edu.vandy.simulator.utils.Assignment.UNDERGRADUATE
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.test.TestCoroutineDispatcher
-import kotlinx.coroutines.test.resetMain
-import kotlinx.coroutines.test.setMain
+import edu.vandy.simulator.utils.Assignment.isAssignment
+import edu.vandy.simulator.utils.Student
+import edu.vandy.simulator.utils.Student.Type.Graduate
+import edu.vandy.simulator.utils.Student.Type.Undergraduate
+import io.mockk.MockKAnnotations
+import io.mockk.every
+import io.mockk.mockkStatic
 import org.junit.Assert
 import org.junit.Assume.assumeTrue
 import org.junit.Rule
-import org.junit.rules.TestWatcher
+import org.junit.rules.TestRule
 import org.junit.rules.Timeout
 import org.junit.rules.Timeout.seconds
-import org.junit.runner.Description
+import org.junit.runners.model.Statement
 import org.mockito.junit.MockitoJUnit
-
+import org.mockito.stubbing.LenientStubber
+import org.mockito.stubbing.OngoingStubbing
 
 /**
  * Base class used for all assignment test classes
  */
-@ExperimentalCoroutinesApi
-open class AssignmentTests {
-    /** Required for all mockito tests */
-    @Rule
-    @JvmField
-    var mockitoRule = MockitoJUnit.rule()!!
-
-    /** Assignment rule ensures that the Assignment type is reset before each test method runs */
-    @get:Rule
-    var assignmentTestRule = AssignmentTestRule()
-
-    /** Sets all tests to timeout after 5 seconds. */
-    @get:Rule
-    open var timeout: Timeout = seconds(10)
-
-    /** Special coroutine test rule that sets up TestCoroutineDispatcher */
-    @get:Rule
-    var coroutinesTestRule = CoroutineTestRule()
-
+open class AssignmentTests(timeoutSeconds: Int = 5) {
     /** Can be overridden by derived classes to run or prevent tests from running */
     open val runTest: Boolean = true
 
@@ -48,58 +31,93 @@ open class AssignmentTests {
             if (it) println("SKIPPING: ${Thread.currentThread().stackTrace[2].methodName}")
         }
 
-    /** @return true if current project is a graduate assignment */
-    fun isGradAssignment() = isAssignmentType(GRADUATE)
+    /** Required for all mockito tests */
+    @Rule
+    @JvmField
+    var mockitoRule = MockitoJUnit.rule()!!
 
-    /** @return true if current project is a undergraduate assignment */
-    fun isUndergradAssignment() = isAssignmentType(UNDERGRADUATE)
+    @Rule
+    @JvmField
+    var mockkRule = TestRule { base, _ ->
+        object : Statement() {
+            override fun evaluate() {
+                MockKAnnotations.init(this,
+                        relaxUnitFun = true,
+                        overrideRecordPrivateCalls = true)
+                try {
+                    base?.evaluate()
+                } finally {
+                    //TODOx: is this necessary?
+                    //unmockkAll()
+                }
+            }
+        }
+    }
 
-    /** @return true if current project is a [type] assignment */
-    fun isAssignmentType(type: Int) = (Assignment.sTypes and type) != 0
+    /**
+     * Sets all tests to timeout after 5 seconds.
+     */
+    @Rule
+    @JvmField
+    var timeout: Timeout = seconds(timeoutSeconds.toLong())
+
+    /** Kotlin mocking library is missing this whenever extension. */
+    fun <T> LenientStubber.whenever(methodCall: T): OngoingStubbing<T> {
+        return `when`(methodCall)!!
+    }
 
     /**
      * Throws [org.junit.AssumptionViolatedException]
-     * to force a test to be ignored when the current
-     * project is not a graduate assignment.
+     * project is does not match the [assignment].
      */
-    fun graduateTest() = assumeTrue("Graduate test ignored", runAs(GRADUATE))
-
-    /**
-     * Throws [org.junit.AssumptionViolatedException]
-     * to force a test to be ignored when the current
-     * project is not an undergraduate assignment.
-     */
-    fun undergraduateTest() = assumeTrue("Undergraduate test ignored", runAs(UNDERGRADUATE))
+    fun assignmentTest(assignment: Assignment.Name) {
+        assumeTrue("Assignment $assignment test ignored.", isAssignment(assignment))
+    }
 
     /**
      * This call the a side-effect of setting the Assignment.sTypes
      * member to type iff (Assignment.sTypes & type) == true.
      */
-    fun runAs(type: Int) = Assignment.testType(type)
-
-//    class CoroutineTestRule : TestRule, CoroutineScope {
-//        override val coroutineContext: CoroutineContext = Job() + Dispatchers.Unconfined
-//
-//        override fun apply(base: Statement, description: Description?) = object : Statement() {
-//            override fun evaluate() {
-//                base.evaluate()
-//                this@CoroutineTestRule.cancel()
-//            }
-//        }
-//    }
-
-    class CoroutineTestRule(val dispatcher: TestCoroutineDispatcher = TestCoroutineDispatcher())
-        : TestWatcher() {
-        override fun starting(description: Description?) {
-            super.starting(description)
-            Dispatchers.setMain(dispatcher)
+    fun runAs(vararg args: Any): Boolean {
+        check(args.size in 1..2) {
+            "runAs() should have 1 or 2 parameters (not $args.size)"
+        }
+        check(args.size < 2 || args[0] != args[1]) {
+            "runAs() should have 2 different parameters."
         }
 
-        override fun finished(description: Description?) {
-            super.finished(description)
-            Dispatchers.resetMain()
-            dispatcher.cleanupTestCoroutines()
+        mockkStatic(Assignment::class, Student::class)
+
+        args.forEach { arg ->
+            when (arg) {
+                is Assignment.Name -> {
+                    // Throws an assumption exception if the passed assignment is not
+                    // part of the current project.
+                    assumeTrue("$arg test ignored.", Assignment.includes(arg))
+                    every { Assignment.includes(any()) } answers {
+//                        val result = call.invocation.args[0] == arg
+//                        println("Assignment is ${call.invocation.args[0]}? answer: $result (mocking $arg)")
+                        call.invocation.args[0] == arg
+                    }
+                }
+                is Student.Type -> {
+                    check(arg == Graduate || arg == Undergraduate) {
+                        "runAs Int value must be $Graduate or $Undergraduate"
+                    }
+                    // Throws an assumption exception if the passed student type not
+                    // included in the set of student types supported in this project.
+                    assumeTrue("$arg test ignored.", Student.`is`(arg))
+                    every { Student.`is`(any()) } answers {
+//                        val result = call.invocation.args[0] == arg
+//                        println("Student is ${call.invocation.args[0]}? answer: $result (mocking $arg)")
+                        call.invocation.args[0] == arg
+                    }
+                }
+                else -> error("Invalid runAs type $arg.")
+            }
         }
+
+        return true
     }
 
     //TODOx: can't get this to work without getting UnfinishedMockingSessionException

@@ -115,7 +115,7 @@ open class Preference<T : Any>(val default: T,
         if (prefs.contains(name)) {
             with(prefs.edit()) {
                 remove(name)
-            }.commit()
+            }.apply()
         }
     }
 }
@@ -259,10 +259,10 @@ class ObservablePreference<T : Any>(default: T,
                                     subscriber: Subscriber<T>)
     : Preference<T>(default, name, adapter) {
 
-    private val listener = SharedPreferences.OnSharedPreferenceChangeListener { pref, key ->
+    private val listener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
         try {
             if (key == name) {
-                with(pref) {
+                with(prefs) {
                     @Suppress("UNCHECKED_CAST")
                     val value = when (default) {
                         is Int -> getInt(name, default)
@@ -271,12 +271,13 @@ class ObservablePreference<T : Any>(default: T,
                         is Boolean -> getBoolean(name, default)
                         is String -> getString(name, default) ?: ""
                         else -> {
-                            val string = getString(name, null)
-                            when {
-                                string == null -> default
-                                adapter != null -> adapter.decode(string) ?: default
-                                else -> Gson().fromJson<T>(string, object : TypeToken<T>() {}.type)
-                            }
+                            getString(name, null)?.let {
+                                if (adapter != null) {
+                                    adapter.decode(it)
+                                } else {
+                                    Gson().fromJson(it, object : TypeToken<T>() {}.type)
+                                }
+                            } ?: default as Any
                         }
                     } as T
 
@@ -284,7 +285,7 @@ class ObservablePreference<T : Any>(default: T,
                 }
             }
         } catch (e: Exception) {
-            error("ObservablePreference for key $key requires a custom adapter: $e")
+            error("ObservablePreference for key $key failed: $e")
         }
     }
 

@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import edu.vanderbilt.grader.rubric.Rubric;
 import edu.vandy.simulator.managers.beings.Being;
 import edu.vandy.simulator.managers.beings.BeingManager;
 
@@ -26,10 +25,6 @@ import static org.mockito.Mockito.when;
 public class Assignment_1A_RunnableThreadsMgrTest {
     private final static int BEING_COUNT = 5;
 
-    @Rubric(value = "RunnableThreadsManager newBeing method test.",
-            goal = "The goal of this test is to ensure that the newBeing call creates a new being.",
-            reference = {"@@Unfinished"}
-    )
     @Test(timeout = 100)
     public void newBeingTest() {
         BeingManager beingManager = new RunnableThreadsMgr();
@@ -41,13 +36,6 @@ public class Assignment_1A_RunnableThreadsMgrTest {
         assertEquals("Being mThread should be null.", 0, being.mCompleted);
     }
 
-    @Rubric(value = "BeingManager makeBeings method test.",
-            goal = "The goal of this test is to ensure that when the BeingManager makeBeings method " +
-                    "is invoked and repeatedly calls the RunnableThreadsMgr newBeing method, that the " +
-                    "correct number of unique Being instances are created." +
-                    "5 new beings.",
-            reference = {"@@Unfinished"}
-    )
     @Test(timeout = 100)
     public void makeBeingsTest() {
         BeingManager beingManager = new RunnableThreadsMgr();
@@ -66,14 +54,6 @@ public class Assignment_1A_RunnableThreadsMgrTest {
         );
     }
 
-    @Rubric(value = "RunnableThreadsMgr beingThreads method test.",
-            goal = "This test checks for the proper implementation of the " +
-                    "RunnableThreadsMgr's beingThreads method. " +
-                    "It checks that all the expected method calls are made " +
-                    "with the correct parameters, the correct number of times," +
-                    "and in the correct order.",
-            reference = {"@@Unfinished"}
-    )
     @Test(timeout = 10000)
     public void beginBeingThreadsTest() {
         // Setup mocks.
@@ -108,14 +88,6 @@ public class Assignment_1A_RunnableThreadsMgrTest {
         mockBeings.forEach(being -> verify(being, times(1)).run());
     }
 
-    @Rubric(value = "RunnableThreadsMgr runSimulation method test.",
-            goal = "This test checks for the proper implementation of the " +
-                    "RunnableThreadsMgr's runSimulation method. " +
-                    "It checks that all the expected method calls are made " +
-                    "with the correct parameters, the correct number of times," +
-                    "and in the correct order.",
-            reference = {"@@Unfinished"}
-    )
     @Test(timeout = 10000)
     public void runSimulationTest() throws Exception {
         RunnableThreadsMgr beingManager = mock(RunnableThreadsMgr.class);
@@ -141,14 +113,6 @@ public class Assignment_1A_RunnableThreadsMgrTest {
         inOrder.verify(waiterThread).join();
     }
 
-    @Rubric(value = "RunnableThreadsMgr createAndStartWaiterForBeingThreads method test.",
-            goal = "This test checks for the proper implementation of the " +
-                    "RunnableThreadsMgr's createAndStartWaiterForBeingThreads method. " +
-                    "It checks that all the expected method calls are made " +
-                    "with the correct parameters, the correct number of times," +
-                    "and in the correct order.",
-            reference = {"@@Unfinished"}
-    )
     @Test(timeout = 10000)
     public void testCreateAndStartWaiterForBeingThreadsMethod() {
         RunnableThreadsMgr beingManager = new RunnableThreadsMgr();

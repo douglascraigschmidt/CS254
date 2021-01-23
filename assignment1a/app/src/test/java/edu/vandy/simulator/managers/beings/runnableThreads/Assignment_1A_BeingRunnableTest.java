@@ -6,7 +6,6 @@ import org.junit.rules.Timeout;
 import org.mockito.InOrder;
 
 import admin.AssignmentTests;
-import edu.vanderbilt.grader.rubric.Rubric;
 import edu.vandy.simulator.managers.beings.BeingManager;
 import edu.vandy.simulator.managers.palantiri.Palantir;
 

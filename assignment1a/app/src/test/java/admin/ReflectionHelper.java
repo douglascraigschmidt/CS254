@@ -55,18 +55,6 @@ public class ReflectionHelper {
                 .findFirst().orElse(null);
     }
 
-    public static void injectValueIntoNamedField(
-            Object parentClass,
-            Object fieldValue,
-            String fieldName)
-            throws NoSuchFieldException, IllegalAccessException {
-        Field field = parentClass.getClass().getField(fieldName);
-        boolean wasAccessible = field.isAccessible();
-        field.setAccessible(true);
-        field.set(parentClass, fieldValue);
-        field.setAccessible(wasAccessible);
-    }
-
     public static void injectValueIntoFirstMatchingField(
             Object parentClass,
             Object fieldValue,

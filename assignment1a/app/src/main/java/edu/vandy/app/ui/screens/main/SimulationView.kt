@@ -71,6 +71,7 @@ class SimulationView @JvmOverloads constructor(context: Context,
 
         /** Maximum number of beings */
         internal val MAX_BEING_COUNT = 10
+
         /** Maximum number of palantiri */
         internal val MAX_PALANTIR_COUNT = 10
 
@@ -82,7 +83,7 @@ class SimulationView @JvmOverloads constructor(context: Context,
     /** Min/Max sprite margin sizes. */
     private var marginRange =
             Range(4.dpToPx.toInt() + PROGRESS_SIZE.height,
-                  8.dpToPx.toInt() + PROGRESS_SIZE.height)
+                    8.dpToPx.toInt() + PROGRESS_SIZE.height)
 
     /**
      * Current distance between adjacent sprites.
@@ -97,6 +98,7 @@ class SimulationView @JvmOverloads constructor(context: Context,
 
     /** Current maximum being dimensions. */
     private var maxBeingDim = Size(0, 0)
+
     /** Current maximum palantir dimensions. */
     private var maxPalantirDim = Size(0, 0)
 
@@ -123,6 +125,7 @@ class SimulationView @JvmOverloads constructor(context: Context,
      * the state margin.
      */
     internal var maxStateBounds = NO_SIZE
+
     /** Only returns the maximum state size if show states is enabled. */
     private val stateSize
         get() = if (Settings.showStates) {
@@ -130,6 +133,7 @@ class SimulationView @JvmOverloads constructor(context: Context,
         } else {
             NO_SIZE
         }
+
     /** Only returns the maximum state bounds if show states is enabled. */
     internal val stateBounds
         get() = if (Settings.showStates) {
@@ -140,16 +144,22 @@ class SimulationView @JvmOverloads constructor(context: Context,
 
     /** Palantir alpha animation parameters. */
     private val palantirAlpha = 0.8f
+
     /** For status text */
     private var stateMargin = 2.dpToPx.toInt()
+
     /** For path anchor circle */
     private val pathAnchorRadius = 10f
+
     /** Current snapshot. */
     private var snapshot: ModelSnapshot
+
     /** Previous snapshot. */
     private var prevSnapshot: ModelSnapshot
+
     /** Current being sprites (snapshot drawable wrapper class) */
     internal var beings = HashMap<Long, Sprite>()
+
     /** Current palantir sprites (snapshot drawable wrapper class) */
     internal var palantiri = HashMap<Long, Sprite>()
 
@@ -283,8 +293,8 @@ class SimulationView @JvmOverloads constructor(context: Context,
                 validateModelState(prevSnapshot, snapshot)
             } catch (e: Exception) {
                 context.toast("The currently Palantir model has not " +
-                              "been properly implemented. Please fix " +
-                              "your simulation solution and try again.")
+                        "been properly implemented. Please fix " +
+                        "your simulation solution and try again.")
             }
         }
 
@@ -296,22 +306,22 @@ class SimulationView @JvmOverloads constructor(context: Context,
         // Only update count ranges if either being or palantir
         // counts have changed since last update.
         if (prevSnapshot.beings.count() != snapshot.beings.count() ||
-            prevSnapshot.palantiri.count() != snapshot.palantiri.count()) {
+                prevSnapshot.palantiri.count() != snapshot.palantiri.count()) {
             calcMaxSpriteCounts()
         }
 
         if (Settings.beingSizeRange.max < snapshot.beings.count()) {
             context.toast("Current display size and resolution " +
-                          "will not support ${snapshot.beings.count()} " +
-                          "beings")
+                    "will not support ${snapshot.beings.count()} " +
+                    "beings")
             updateHashMaps(null)
             return
         }
 
         if (Settings.palantirSizeRange.max < snapshot.palantiri.count()) {
             context.toast("Current display size and resolution " +
-                          "will not support ${snapshot.palantiri.count()} " +
-                          "palantiri")
+                    "will not support ${snapshot.palantiri.count()} " +
+                    "palantiri")
             updateHashMaps(null)
             return
         }
@@ -332,7 +342,7 @@ class SimulationView @JvmOverloads constructor(context: Context,
 
         // Only do a layout if the number of beings or palantiri have changed.
         if (prevSnapshot.beings.size != snapshot.beings.size ||
-            prevSnapshot.palantiri.size != snapshot.palantiri.size) {
+                prevSnapshot.palantiri.size != snapshot.palantiri.size) {
             setSizesAndRanges()
             requestLayout()
         } else {
@@ -353,17 +363,21 @@ class SimulationView @JvmOverloads constructor(context: Context,
                 "Invalid being count: %d but should be %d."),
         BeingStarvationError(
                 "Being starvation: being %d."),
+
         // used
         BeingIllegalStateTransitionError(
                 "Illegal being state transition: being %d %s -> %s."),
+
         // used
         BeingPalantirIdInvalid(
                 "Being %d acquired an unknown palantir %d."),
+
         // used
         BeingNoPalantirId(
                 "Being %d is in state %s but has no associated palantir id"),
         BeingUnfairError(
                 "Being %d has not had fair access to palantiri."),
+
         // used
         BeingMultipleUseError(
                 "Being %d is using %d palantiri."),
@@ -375,9 +389,11 @@ class SimulationView @JvmOverloads constructor(context: Context,
                 "Palantir %d has never been used."),
         PalantirIllegalTransitionStateError(
                 "Illegal palantir state transition: palantir %d %s -> %s."),
+
         // used
         PalantirMultipleUseError(
                 "Palantir %d has been assigned to more than %d beings."),
+
         // used
         PalantirUsedByWrongBeing(
                 "Palantir %d is assigned to being %d but this being is gazing into palantir %d"),
@@ -409,7 +425,7 @@ class SimulationView @JvmOverloads constructor(context: Context,
         // A cancelling or cancelled model state will never be
         // in a valid state so there is nothing to check.
         if (model.simulator.state == SimulatorComponent.State.CANCELLING ||
-            model.simulator.state == SimulatorComponent.State.CANCELLED) {
+                model.simulator.state == SimulatorComponent.State.CANCELLED) {
             return
         }
 
@@ -428,8 +444,8 @@ class SimulationView @JvmOverloads constructor(context: Context,
         // Being count should match settings being count value.
         if (beings.count() != Settings.beingCount) {
             addError(-1, -1,
-                     ErrorType.BeingCountError.format(
-                             beings.count(), Settings.beingCount))
+                    ErrorType.BeingCountError.format(
+                            beings.count(), Settings.beingCount))
         }
 
         palantiri.values.forEach {
@@ -439,10 +455,10 @@ class SimulationView @JvmOverloads constructor(context: Context,
                 val count = beings.filterValues { b -> b.palantirId == it.id }.count()
                 if (count > 1) {
                     addError(it.beingId,
-                             it.id,
-                             ErrorType.PalantirMultipleUseError.format(
-                                     it.id.toInt(),
-                                     count))
+                            it.id,
+                            ErrorType.PalantirMultipleUseError.format(
+                                    it.id.toInt(),
+                                    count))
                 }
             }
         }
@@ -451,9 +467,9 @@ class SimulationView @JvmOverloads constructor(context: Context,
             // Being should only be moving to a valid new state.
             if (!validateBeingState(it)) {
                 addError(it.id,
-                         -1,
-                         ErrorType.BeingIllegalStateTransitionError.format(
-                                 it.id.toInt(), it.prevState?.name ?: "null", it.state.name))
+                        -1,
+                        ErrorType.BeingIllegalStateTransitionError.format(
+                                it.id.toInt(), it.prevState?.name ?: "null", it.state.name))
             }
 
             // We only check for model consistency when a being
@@ -466,42 +482,42 @@ class SimulationView @JvmOverloads constructor(context: Context,
                     // Palantir id should be set.
                     if (it.palantirId == -1L) {
                         addError(it.id,
-                                 -1,
-                                 ErrorType.BeingNoPalantirId.format(it.id.toInt(), it.state))
+                                -1,
+                                ErrorType.BeingNoPalantirId.format(it.id.toInt(), it.state))
                     } else {
                         // The palantir should have an owner.
                         val palantir = palantiri[it.palantirId]
                         if (palantir == null) {
                             addError(it.id,
-                                     it.palantirId,
-                                     ErrorType.BeingPalantirIdInvalid.format(
-                                             it.id.toInt(), it.palantirId.toInt()))
+                                    it.palantirId,
+                                    ErrorType.BeingPalantirIdInvalid.format(
+                                            it.id.toInt(), it.palantirId.toInt()))
                         } else {
                             // This is a framework error check and if it fails, then the
                             // framework needs to be fixed (not a student assignment error).
                             if (strictMode) {
                                 require(palantir.beingId != -1L) {
                                     "Framework Error: Being ${it.id} has acquired palantir " +
-                                    "${it.palantirId}, but this palantir beingId is set to -1."
+                                            "${it.palantirId}, but this palantir beingId is set to -1."
                                 }
                             }
 
                             // The being's palantir should have this being as an owner.
                             if (palantir.beingId == -1L) {
                                 addError(it.id,
-                                         it.palantirId,
-                                         ErrorType.BeingPalantirDoesNotHaveBeingIdSet.format(
-                                                 it.id.toInt(),
-                                                 it.palantirId.toInt(),
-                                                 palantir.id))
+                                        it.palantirId,
+                                        ErrorType.BeingPalantirDoesNotHaveBeingIdSet.format(
+                                                it.id.toInt(),
+                                                it.palantirId.toInt(),
+                                                palantir.id))
                             } else if (palantir.beingId != it.id) {
                                 addError(it.id,
-                                         it.palantirId,
-                                         ErrorType.BeingPalantirDoesNotHaveCorrectBeingId.format(
-                                                 it.id.toInt(),
-                                                 it.palantirId.toInt(),
-                                                 palantir.id,
-                                                 palantir.beingId))
+                                        it.palantirId,
+                                        ErrorType.BeingPalantirDoesNotHaveCorrectBeingId.format(
+                                                it.id.toInt(),
+                                                it.palantirId.toInt(),
+                                                palantir.id,
+                                                palantir.beingId))
                             }
 
                             // No other palantir should have this being as an owner,
@@ -509,10 +525,10 @@ class SimulationView @JvmOverloads constructor(context: Context,
                             val count = palantiri.filterValues { p -> p.beingId == it.id }.count()
                             if (count > 1) {
                                 addError(it.id,
-                                         it.palantirId,
-                                         ErrorType.BeingMultipleUseError.format(
-                                                 it.id.toInt(),
-                                                 count))
+                                        it.palantirId,
+                                        ErrorType.BeingMultipleUseError.format(
+                                                it.id.toInt(),
+                                                count))
                             }
                         }
                     }
@@ -532,8 +548,8 @@ class SimulationView @JvmOverloads constructor(context: Context,
             // Palantir count should match settings palantir count value.
             if (palantiri.count() != Settings.palantirCount) {
                 addError(-1, -1,
-                         ErrorType.PalantirCountError.format(
-                                 palantiri.count(), Settings.palantirCount))
+                        ErrorType.PalantirCountError.format(
+                                palantiri.count(), Settings.palantirCount))
             }
         }
     }
@@ -549,11 +565,11 @@ class SimulationView @JvmOverloads constructor(context: Context,
         return when (s2) {
             State.HOLDING -> s1 == null || s1 == State.DONE
             State.IDLE -> s1 == null ||
-                          s1 == State.RELEASING ||
-                          s1 == State.ACQUIRING ||
-                          s1 == State.WAITING ||
-                          s1 == State.GAZING ||
-                          s1 == State.DONE
+                    s1 == State.RELEASING ||
+                    s1 == State.ACQUIRING ||
+                    s1 == State.WAITING ||
+                    s1 == State.GAZING ||
+                    s1 == State.DONE
             State.WAITING -> s1 == State.IDLE || s1 == State.RELEASING
             State.ACQUIRING -> s1 == State.IDLE || s1 == State.WAITING
             State.GAZING -> s1 == State.ACQUIRING
@@ -580,7 +596,7 @@ class SimulationView @JvmOverloads constructor(context: Context,
     private fun validateModelState(m1: ModelSnapshot,
                                    m2: ModelSnapshot): Boolean {
         if (m2.simulator.state == SimulatorComponent.State.CANCELLING ||
-            m2.simulator.state == SimulatorComponent.State.CANCELLED) {
+                m2.simulator.state == SimulatorComponent.State.CANCELLED) {
             return true
         }
 
@@ -592,7 +608,7 @@ class SimulationView @JvmOverloads constructor(context: Context,
             val b2 = m2.beings[b1.id]
             require(b2 != null) {
                 "Being from a previous snapshot b1 was " +
-                "not found in new snapshot: $b1"
+                        "not found in new snapshot: $b1"
             }
             b2!!
 
@@ -622,11 +638,11 @@ class SimulationView @JvmOverloads constructor(context: Context,
                 when (s2) {
                     State.HOLDING -> requires(s1 == null || s1 == State.DONE)
                     State.IDLE -> requires(s1 == null ||
-                                           s1 == State.RELEASING ||
-                                           s1 == State.ACQUIRING ||
-                                           s1 == State.WAITING ||
-                                           s1 == State.GAZING ||
-                                           s1 == State.DONE)
+                            s1 == State.RELEASING ||
+                            s1 == State.ACQUIRING ||
+                            s1 == State.WAITING ||
+                            s1 == State.GAZING ||
+                            s1 == State.DONE)
                     State.WAITING -> requires(s1 == State.IDLE || s1 == State.RELEASING)
                     State.ACQUIRING -> requires(s1 == State.IDLE || s1 == State.WAITING)
                     State.GAZING -> requires(s1 == State.ACQUIRING)
@@ -728,8 +744,8 @@ class SimulationView @JvmOverloads constructor(context: Context,
             return super.onMeasure(widthMeasureSpec, heightMeasureSpec)
         }
 
-        val ancestor = findAncestor { oRealized } ?:
-                       return super.onMeasure(widthMeasureSpec, heightMeasureSpec)
+        val ancestor = findAncestor { oRealized }
+                ?: return super.onMeasure(widthMeasureSpec, heightMeasureSpec)
 
         val maxWidth = ancestor.width
         val maxHeight = ancestor.height
@@ -758,8 +774,8 @@ class SimulationView @JvmOverloads constructor(context: Context,
                     0
                 } else {
                     beings.values.last().bounds.oBottom +
-                    spriteMargin +
-                    oPaddingBottom
+                            spriteMargin +
+                            oPaddingBottom
                 }
 
         val desiredPalantiriHeight =
@@ -767,14 +783,14 @@ class SimulationView @JvmOverloads constructor(context: Context,
                     0
                 } else {
                     palantiri.values.last().bounds.oBottom +
-                    spriteMargin +
-                    oPaddingBottom
+                            spriteMargin +
+                            oPaddingBottom
                 }
 
         desiredWidth = maxWidth
         desiredHeight = max(maxHeight,
-                            max(desiredBeingsHeight,
-                                desiredPalantiriHeight))
+                max(desiredBeingsHeight,
+                        desiredPalantiriHeight))
 
         // If landscape, then need to swap reversed width/height
         // for getSize and setMeasureDimension calls below.
@@ -912,8 +928,8 @@ class SimulationView @JvmOverloads constructor(context: Context,
             // Convert minBeingSize (height) to width.
             val spriteSize =
                     calcMaxSpriteSize(beings,
-                                      height = minBeingSize.toFloat(),
-                                      withState = true)
+                            height = minBeingSize.toFloat(),
+                            withState = true)
             val minSize = max(spriteSize.width.toInt(), stateSize) + minMargin
             ((size - minMargin).toFloat() / minSize).toInt()
         }
@@ -923,14 +939,14 @@ class SimulationView @JvmOverloads constructor(context: Context,
 
         require(maxBeingCount > 0) {
             "minimum being, margin, and state " +
-            "sizes are too large to display a being"
+                    "sizes are too large to display a being"
         }
 
         // Currently, min palantir size should always be
         // less than or equal to min being size.
         require(minPalantirSize <= minBeingSize) {
             "minPalantirSize <= minBeingSize " +
-            "$minPalantirSize <= $minBeingSize"
+                    "$minPalantirSize <= $minBeingSize"
         }
 
         // If the minimum palantir size is <= minimum being size
@@ -944,7 +960,7 @@ class SimulationView @JvmOverloads constructor(context: Context,
                     maxBeingCount // should always be the case
                 } else {
                     ((size - minMargin).toFloat() /
-                     (minPalantirSize + minMargin + stateSize)).toInt()
+                            (minPalantirSize + minMargin + stateSize)).toInt()
                 }
 
         // Restrict to a hard maximum.
@@ -952,7 +968,7 @@ class SimulationView @JvmOverloads constructor(context: Context,
 
         require(maxPalantirCount > 0) {
             "Minimum palantir , margin, and state " +
-            "sizes are too large to display a palantir"
+                    "sizes are too large to display a palantir"
         }
 
         return Pair(maxBeingCount, maxPalantirCount)
@@ -977,7 +993,7 @@ class SimulationView @JvmOverloads constructor(context: Context,
         // Need a valid size in the fixed dimension.
         require(width != 0 && height != 0) {
             "setSharedPrefSizes() should only be " +
-            "called once the view has been realized"
+                    "called once the view has been realized"
         }
 
         val size = Size(width, height)
@@ -1081,9 +1097,9 @@ class SimulationView @JvmOverloads constructor(context: Context,
         // will always fit in the passed range.
         var (beingSizeRange, _) =
                 calcSpriteSizeRange(layout.oHeight,
-                                    beings,
-                                    spriteMargin,
-                                    beingRange)
+                        beings,
+                        spriteMargin,
+                        beingRange)
 
         // Max palantir height is always scaled to max being height
         // so adjust range upper bound to be scaled to the possibly
@@ -1095,17 +1111,17 @@ class SimulationView @JvmOverloads constructor(context: Context,
 
         var (palantirSizeRange, palantirMargin) =
                 calcSpriteSizeRange(layout.oHeight,
-                                    palantiri,
-                                    spriteMargin,
-                                    palantirRange)
+                        palantiri,
+                        spriteMargin,
+                        palantirRange)
 
         // Determine the maximum being size that will ensure that
         // adjacently gazing beings do not overlap. Don't remove
         // state size since it's included in the palantirSizeRange.max
         // value.
         val maxGazingSize = palantirSizeRange.max +
-                            palantirMargin -
-                            minMargin
+                palantirMargin -
+                minMargin
 
         // Bound being size by the minimum of the maximum
         // gazing size and the maximum being size returned
@@ -1170,7 +1186,7 @@ class SimulationView @JvmOverloads constructor(context: Context,
         require(spriteBounds * count <= layoutSize) {
             val result = spriteBounds * count <= layoutSize
             "Algorithm incorrect: $spriteBounds * " +
-            "$count == $result <= $layoutSize"
+                    "$count == $result <= $layoutSize"
         }
 
         // This bounds value is a little bigger than the actual
@@ -1192,7 +1208,7 @@ class SimulationView @JvmOverloads constructor(context: Context,
                 <= layoutSize) {
             val result = size * count + minMargin * (count + 1)
             "Algorithm incorrect: $size * $count + " +
-            "$minMargin * ($count + 1) == $result <= $layoutSize"
+                    "$minMargin * ($count + 1) == $result <= $layoutSize"
         }
 
         // Adjust this size to be no larger than a scaled
@@ -1226,7 +1242,7 @@ class SimulationView @JvmOverloads constructor(context: Context,
                 calcRequiredLayoutSize(count, adjustedRange.max, margin.toInt())
         require(requiredSize <= layoutSize) {
             "requiredSize <= layoutSize -> " +
-            "$requiredSize <= $layoutSize"
+                    "$requiredSize <= $layoutSize"
         }
 
         return Pair(adjustedRange, margin.toInt())
@@ -1286,11 +1302,11 @@ class SimulationView @JvmOverloads constructor(context: Context,
     private fun heightRangeToWidthRange(sprites: Map<Long, Sprite>,
                                         heightRange: Range<Int>): Range<Int> {
         val minSize = calcMaxSpriteSize(sprites,
-                                        heightRange.lower.toFloat())
+                heightRange.lower.toFloat())
         val maxSize = calcMaxSpriteSize(sprites,
-                                        heightRange.upper.toFloat())
+                heightRange.upper.toFloat())
         return Range(minSize.width.roundToInt(),
-                     maxSize.width.roundToInt())
+                maxSize.width.roundToInt())
     }
 
     /**
@@ -1313,7 +1329,7 @@ class SimulationView @JvmOverloads constructor(context: Context,
         // to heights.
         val aspect = size.height / size.width
         return Range((widthRange.lower * aspect).roundToInt(),
-                     (widthRange.upper * aspect).roundToInt())
+                (widthRange.upper * aspect).roundToInt())
     }
 
     /**
@@ -1350,7 +1366,7 @@ class SimulationView @JvmOverloads constructor(context: Context,
 
         val size = sprites.map {
             it.value.calcDimensions(actualHeight, withState)
-        }.maxBy { it.width }
+        }.maxByOrNull { it.width }
 
         return size ?: error("calcMaxSpriteSize - empty sprites parameter.")
     }
@@ -1422,9 +1438,9 @@ class SimulationView @JvmOverloads constructor(context: Context,
         // First layout beings.
         if (beings.isNotEmpty()) {
             doSpritesLayout(layoutRect,
-                            beings,
-                            maxBeingDim,
-                            spriteMargin)
+                    beings,
+                    maxBeingDim,
+                    spriteMargin)
         }
 
         // Assuming that being size should remain constant,
@@ -1436,8 +1452,8 @@ class SimulationView @JvmOverloads constructor(context: Context,
                     spriteMargin
                 } else {
                     spriteMargin +
-                    maxBeingDim.oHeight -
-                    maxPalantirDim.oHeight
+                            maxBeingDim.oHeight -
+                            maxPalantirDim.oHeight
                 }
 
         // Shift bounds for palantiri layout.
@@ -1446,9 +1462,9 @@ class SimulationView @JvmOverloads constructor(context: Context,
         // Now layout palantiri.
         if (palantiri.isNotEmpty()) {
             doSpritesLayout(layoutRect,
-                            palantiri,
-                            maxPalantirDim,
-                            minPalantirMargin)
+                    palantiri,
+                    maxPalantirDim,
+                    minPalantirMargin)
         }
     }
 
@@ -1534,7 +1550,7 @@ class SimulationView @JvmOverloads constructor(context: Context,
                     }
                     require(it.bounds.oBottom <= boundingBox.oBottom) {
                         "sprite $i height = ${it.bounds.oBottom} " +
-                        "> ${boundingBox.oBottom}"
+                                "> ${boundingBox.oBottom}"
                     }
                 }
     }
@@ -1651,11 +1667,11 @@ class SimulationView @JvmOverloads constructor(context: Context,
         }
 
         validateRanges("Being",
-                       curCount,
-                       curSize,
-                       maxCount,
-                       minSize,
-                       maxSize)
+                curCount,
+                curSize,
+                maxCount,
+                minSize,
+                maxSize)
 
         if (landscape) {
             val minWidth =
@@ -1666,12 +1682,12 @@ class SimulationView @JvmOverloads constructor(context: Context,
                             beings, curSize.toFloat()).width.toInt()
 
             validateMinMaxLayouts("Being",
-                                  bounds,
-                                  curCount,
-                                  curWidth,
-                                  spriteMargin,
-                                  maxCount,
-                                  minWidth)
+                    bounds,
+                    curCount,
+                    curWidth,
+                    spriteMargin,
+                    maxCount,
+                    minWidth)
         }
     }
 
@@ -1695,11 +1711,11 @@ class SimulationView @JvmOverloads constructor(context: Context,
         }
 
         validateRanges("Palantir",
-                       curCount,
-                       curSize,
-                       maxCount,
-                       minSize,
-                       maxSize)
+                curCount,
+                curSize,
+                maxCount,
+                minSize,
+                maxSize)
 
         if (landscape) {
             val minWidth =
@@ -1710,12 +1726,12 @@ class SimulationView @JvmOverloads constructor(context: Context,
                             palantiri, curSize.toFloat()).width.toInt()
 
             validateMinMaxLayouts("Palantir",
-                                  bounds,
-                                  curCount,
-                                  curWidth,
-                                  spriteMargin,
-                                  maxCount,
-                                  minWidth)
+                    bounds,
+                    curCount,
+                    curWidth,
+                    spriteMargin,
+                    maxCount,
+                    minWidth)
         }
     }
 
@@ -1763,7 +1779,7 @@ class SimulationView @JvmOverloads constructor(context: Context,
         size = calcRequiredLayoutSize(curCount, curSize, margin)
         require(size <= bounds.oHeight) {
             "$name: curCount, curSize, margin -> size <= bounds.oHeight " +
-            "$curCount, $curSize, $margin -> $size <= $bounds.oHeight"
+                    "$curCount, $curSize, $margin -> $size <= $bounds.oHeight"
         }
 
         return true
@@ -1838,9 +1854,9 @@ class SimulationView @JvmOverloads constructor(context: Context,
         protected val boundsRect: Rect
             get() {
                 _translatedBounds.set(bounds.left + translationX,
-                                      bounds.top + translationY,
-                                      bounds.right + translationX,
-                                      bounds.bottom + translationY)
+                        bounds.top + translationY,
+                        bounds.right + translationX,
+                        bounds.bottom + translationY)
                 return _translatedBounds
             }
 
@@ -1899,7 +1915,7 @@ class SimulationView @JvmOverloads constructor(context: Context,
                 matrix.postTranslate(-bitmap.width / 2f, -bitmap.height / 2f)
                 matrix.postRotate(rotation)
                 matrix.postScale(drawRect.width().toFloat() / bitmap.width,
-                                 drawRect.height().toFloat() / bitmap.height)
+                        drawRect.height().toFloat() / bitmap.height)
                 val left = drawRect.left + (drawRect.width() / 2f)
                 val top = drawRect.top + (drawRect.height() / 2f)
                 matrix.postTranslate(left, top)
@@ -1998,10 +2014,10 @@ class SimulationView @JvmOverloads constructor(context: Context,
 
             val x: Float =
                     boundsRect.left +
-                    (boundsRect.width() - drawStateRect.width()) / 2f
+                            (boundsRect.width() - drawStateRect.width()) / 2f
             val y: Float =
                     boundsRect.bottom -
-                    (drawStateRect.height() + ascent).toFloat()
+                            (drawStateRect.height() + ascent).toFloat()
 
             if (Settings.showWireFrames) {
                 drawStateRect.offsetTo(x.toInt(), y.toInt() + ascent)
@@ -2057,10 +2073,10 @@ class SimulationView @JvmOverloads constructor(context: Context,
          */
         override fun toString(): String {
             return "size[$width,$height], " +
-                   "rect[${boundsRect.left}, " +
-                   "${boundsRect.top} - , " +
-                   "${boundsRect.right}, " +
-                   "${boundsRect.bottom}]"
+                    "rect[${boundsRect.left}, " +
+                    "${boundsRect.top} - , " +
+                    "${boundsRect.right}, " +
+                    "${boundsRect.bottom}]"
         }
     }
 
@@ -2216,10 +2232,10 @@ class SimulationView @JvmOverloads constructor(context: Context,
             // sprite.
             if (Settings.showPaths && translationX != 0 || translationY != 0) {
                 drawPath(canvas,
-                         bounds.exactCenterX(),
-                         bounds.exactCenterY(),
-                         boundsRect.exactCenterX(),
-                         boundsRect.exactCenterY())
+                        bounds.exactCenterX(),
+                        bounds.exactCenterY(),
+                        boundsRect.exactCenterX(),
+                        boundsRect.exactCenterY())
             }
 
             super.draw(canvas)
@@ -2270,7 +2286,7 @@ class SimulationView @JvmOverloads constructor(context: Context,
                     }
                 }
             } ?: error("$snapshot - connected to an " +
-                       "invalid palantiri id ($palantirId)")
+                    "invalid palantiri id ($palantirId)")
         }
 
         /**
@@ -2316,7 +2332,7 @@ class SimulationView @JvmOverloads constructor(context: Context,
                         // duration needs to be a little shorter to account for
                         // the snapshot delivery lag time.
                         duration = max(0, this@BeingSprite.duration -
-                                          snapshot.elapsedTime)
+                                snapshot.elapsedTime)
                         stopPalantirAnimator()
                         setFloatValues(1f, 0f)
                         start()
@@ -2327,7 +2343,7 @@ class SimulationView @JvmOverloads constructor(context: Context,
                         // duration needs to be a little shorter to account for
                         // the snapshot delivery lag time.
                         duration = max(0, this@BeingSprite.duration -
-                                          snapshot.elapsedTime)
+                                snapshot.elapsedTime)
                         setFloatValues(0f, 1f)
                         start()
                     }
@@ -2377,9 +2393,9 @@ class SimulationView @JvmOverloads constructor(context: Context,
          */
         override fun toString(): String {
             return snapshot.toString() +
-                   ", " +
-                   super.toString() +
-                   " animVal = $animatedValue"
+                    ", " +
+                    super.toString() +
+                    " animVal = $animatedValue"
         }
     }
 
@@ -2522,6 +2538,7 @@ class SimulationView @JvmOverloads constructor(context: Context,
         val prevState get() = snapshot.prevState
         val exception get() = snapshot.exception
         val message get() = snapshot.message
+
         /** Id of currently gazing being. */
         internal val beingId
             get() = snapshot.beingId
@@ -2618,12 +2635,12 @@ class SimulationView @JvmOverloads constructor(context: Context,
 
             if (portrait) {
                 x2 = bounds.exactCenterX() - (bounds.width() / 2f) -
-                     view.beingPalantirMargin - (fromRect.width() / 2f)
+                        view.beingPalantirMargin - (fromRect.width() / 2f)
                 y2 = bounds.bottom - (fromRect.height() / 2f)
             } else {
                 x2 = bounds.exactCenterX()
                 y2 = bounds.exactCenterY() - (bounds.height() / 2f) -
-                     view.beingPalantirMargin - (fromRect.height() / 2f)
+                        view.beingPalantirMargin - (fromRect.height() / 2f)
             }
 
             return offset.set((x2 - x1).toInt(), (y2 - y1).toInt())
@@ -2634,9 +2651,9 @@ class SimulationView @JvmOverloads constructor(context: Context,
          */
         override fun toString(): String {
             return snapshot.toString() +
-                   ", " +
-                   super.toString() +
-                   " animVal = ${animator.animatedValue}"
+                    ", " +
+                    super.toString() +
+                    " animVal = ${animator.animatedValue}"
         }
     }
 }

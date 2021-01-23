@@ -278,8 +278,8 @@ public abstract class PalantiriManager
     }
 
     /**
-     * Static factory class used to create new instances of supported
-     * Palantiri managers.
+     * Static factory class used to create new
+     * instances of supported Palantiri managers.
      */
     public static class Factory {
         /**

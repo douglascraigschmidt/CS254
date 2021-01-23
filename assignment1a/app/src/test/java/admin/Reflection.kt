@@ -4,39 +4,63 @@ import org.junit.Assert
 import java.lang.reflect.Field
 import kotlin.reflect.KClass
 
-inline fun <reified T> Any.value(vararg types: Class<*>): T =
-        if (types.isEmpty()) {
-            this.getValue(this::class.java.findField(T::class.java))
-        } else {
-            this.getValue(this::class.java.findField(*types))
-        }
-
-inline fun <reified T> Any.value(): T? = getField("", T::class.java)
-
-inline fun <reified T> Any.primitiveValue(type: KClass<*>): T {
-    return javaClass.findField(type.javaPrimitiveType!!).let {
-        val wasAccessible = it.isAccessible
-        it.isAccessible = true
-        val result = it.get(this)
-        it.isAccessible = wasAccessible
-        result as T
+inline fun <reified T> Any.value(vararg types: Class<*>): T {
+    val field = if (types.isEmpty()) {
+        this::class.java.findField(T::class.java)
+    } else {
+        this::class.java.findField(*types)
+    }
+    return field.runWithAccess {
+        field.get(this@value) as T
     }
 }
 
+inline fun <reified T> Any.getField(name: String): T {
+    return getField(name, T::class.java)
+}
 
 inline fun <reified T> Any.firstField(): Field? =
         javaClass.declaredFields.firstOrNull { field: Field ->
             field.type == T::class.java
         }
 
-inline fun <reified T> Any.getField(name: String, type: Class<T>): T {
-    return javaClass.findField(type, name).let {
-        getValue(it)
+//TODO
+inline fun <reified C, reified T> getStaticValue(name: String): T {
+    val field = C::class.java.findField(T::class.java, name)
+    return field.runWithAccess {
+        get(null) as T
     }
 }
 
-inline fun <reified T> Any.setField(name: String, value: T) {
-    setField(value, T::class.java, name)
+inline fun <reified T> Any.getJavaPrimitiveField(name: String, type: Class<*>): T {
+    return getField(name, type)
+}
+
+inline fun <reified T> Any.setField(name: String, value: T?) {
+    setField(name, value, T::class.java)
+}
+
+inline fun <reified T> Any.setField(value: T) {
+    javaClass.findField(T::class.java, "").let {
+        it.runWithAccess {
+            set(this, value)
+        }
+    }
+}
+
+inline fun <reified T> Any.setField(value: T, type: Class<*>, name: String = "") {
+    javaClass.findField(type, name).let {
+        it.runWithAccess {
+            it.set(this@setField, value)
+        }
+    }
+}
+
+@SuppressWarnings("deprecation")
+inline fun <reified T> Any.getField(name: String, type: Class<*>): T {
+    return javaClass.findField(type, name).runWithAccess {
+        get(this@getField) as T
+    }
 }
 
 inline fun <reified T> T.injectInto(parent: Any, name: String = ""): T {
@@ -58,7 +82,8 @@ inline fun <reified T> T.injectInto(parent: Any, vararg types: Class<*>): T {
     return this
 }
 
-inline fun <reified T> Any.setJavaPrimitiveField(value: T, name: String) {
+@SuppressWarnings("deprecation")
+inline fun <reified T> Any.setJavaPrimitiveField(name: String, value: T) {
     val javaPrimitiveType = when (value) {
         is Int -> Int::class.javaPrimitiveType
         is Float -> Float::class.javaPrimitiveType
@@ -66,29 +91,9 @@ inline fun <reified T> Any.setJavaPrimitiveField(value: T, name: String) {
         is Short -> Short::class.javaPrimitiveType
         else -> throw Exception("value is not a have an equivalent Java primitive type")
     }
-    javaClass.findField(javaPrimitiveType!!, name).let {
-        val wasAccessible = it.isAccessible
-        it.isAccessible = true
-        it.set(this, value)
-        it.isAccessible = wasAccessible
-    }
-}
 
-inline fun <reified T> Any.setField(value: T) {
-    javaClass.findField(T::class.java, "").let {
-        val wasAccessible = it.isAccessible
-        it.isAccessible = true
-        it.set(this, value)
-        it.isAccessible = wasAccessible
-    }
-}
-
-inline fun <reified T> Any.setField(value: T, type: Class<*>?, name: String = "") {
-    javaClass.findField(type!!, name).let {
-        val wasAccessible = it.isAccessible
-        it.isAccessible = true
-        it.set(this, value)
-        it.isAccessible = wasAccessible
+    javaClass.findField(javaPrimitiveType!!, name).runWithAccess {
+        set(this@setJavaPrimitiveField, value)
     }
 }
 
@@ -118,22 +123,30 @@ fun Class<*>.findField(type: Class<*>, name: String = ""): Field {
     }
 }
 
-inline fun <reified T> Any.getValue(field: Field): T {
-    val wasAccessible = field.isAccessible
-    field.isAccessible = true
-    val result = field.get(this)
-    field.isAccessible = wasAccessible
-    return result as T
+inline fun <reified T> Any.primitiveValue(type: KClass<*>, name: String = ""): T {
+    return javaClass.findField(type.javaPrimitiveType!!, name).let {
+        val wasAccessible = it.isAccessible
+        it.isAccessible = true
+        val result = it.get(this)
+        it.isAccessible = wasAccessible
+        result as T
+    }
 }
 
-var Any.outerclass: Any
+@SuppressWarnings("deprecation")
+inline fun <reified T> Any.setField(name: String, value: T, type: Class<*>?) {
+    javaClass.findField(type!!, name).runWithAccess {
+        set(this@setField, value)
+    }
+}
+
+var Any.outerClass: Any
     get() = javaClass.superclass!!
+    @SuppressWarnings("deprecation")
     set(value) {
-        val field = javaClass.getDeclaredField("this$0")
-        val wasAccessible = field.isAccessible
-        field.isAccessible = true
-        field.set(this, value)
-        field.isAccessible = wasAccessible
+        javaClass.getDeclaredField("this$0").runWithAccess {
+            set(this@outerClass, value)
+        }
     }
 
 fun Any.reflectiveEquals(expected: Any): Boolean {
@@ -147,5 +160,13 @@ fun Any.reflectiveEquals(expected: Any): Boolean {
     }
 
     return true
+}
+
+inline fun <T> Field.runWithAccess(block: Field.() -> T): T {
+    val wasAccessible = isAccessible
+    isAccessible = true
+    val result = block()
+    isAccessible = wasAccessible
+    return result
 }
 

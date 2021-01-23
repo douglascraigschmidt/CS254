@@ -32,8 +32,7 @@ public class RunnableThreadsMgr
     @Override
     public SimpleBeingRunnable newBeing() {
         // Return a new SimpleBeingRunnable instance.
-        // TODO -- you fill in here, replacing null with the
-        // appropriate code.
+        // TODO -- you fill in here replacing this statement with your solution.
         return null;
     }
 
@@ -45,14 +44,17 @@ public class RunnableThreadsMgr
     public void runSimulation() {
         // Call a method to create and start a thread for each being.
         // TODO -- you fill in here.
+        
 
         // Call a method that creates and starts a thread that's then
         //  used to wait for all the being threads to finish and
         //  return that thread to the caller.
         // TODO -- you fill in here.
+        
 
         // Block until the waiter thread has finished.
         // TODO -- you fill in here.
+        
     }
 
     /**
@@ -73,9 +75,11 @@ public class RunnableThreadsMgr
         // (though they are free to do to if they choose).
         //
         // TODO -- you fill in here.
+        
 
         // Start all the threads in the List of Threads.
         // TODO -- you fill in here.
+        
     }
 
     /**
@@ -92,12 +96,14 @@ public class RunnableThreadsMgr
         // the catch clause, which trigger the simulator to generate a
         // shutdownNow() request.
         // TODO -- you fill in here.
+        
 
         // Start running the thread.
         // TODO -- you fill in here.
+        
 
         // Return the thread.
-        // TODO -- you fill in here, replacing null with the thread that was created.
+        // TODO -- you fill in here replacing this statement with your solution.
         return null;
     }
 

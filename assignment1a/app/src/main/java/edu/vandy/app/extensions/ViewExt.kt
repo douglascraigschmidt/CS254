@@ -2,6 +2,7 @@ package edu.vandy.app.extensions
 
 import android.app.Activity
 import android.content.Context
+import android.os.SystemClock
 import androidx.coordinatorlayout.widget.CoordinatorLayout
 import androidx.core.view.ViewCompat
 import android.util.DisplayMetrics
@@ -115,27 +116,6 @@ fun View.postDelayed(delay: Long, action: () -> Unit): Boolean {
 fun Activity.postDelayed(delay: Long, action: () -> Unit): Boolean {
     return contentView?.postDelayed(action, delay) ?: false
 }
-
-/**
- * Returns true if device height >= width. If height == width,
- * true is returned so that this edge case is handle by portrait
- * handlers.
- */
-val View.measuredPortrait: Boolean
-    get() =
-        with(context.applicationContext) {
-            with(getSystemService(Context.WINDOW_SERVICE) as WindowManager) {
-                val metrics = DisplayMetrics()
-                defaultDisplay.getMetrics(metrics)
-                metrics.heightPixels >= metrics.widthPixels
-            }
-        }
-
-/**
- * Returns true if device width > height.
- */
-val View.measuredLandscape: Boolean
-    get() = !measuredPortrait
 
 /**
  * Runs the specified [action] on all descendant views until
@@ -258,16 +238,15 @@ fun View.findImageViewWithTransitionName(transitionName: String): ImageView? {
 
 /**
  * Not sure if this will work or if it has to be a method.
- * TODOx: test this out to see what gets returned.
  */
-var View.behavior
+var View.behavior: () -> CoordinatorLayout.Behavior<View>
     get() = {
         val params = (layoutParams as? CoordinatorLayout.LayoutParams)
-                     ?: throw IllegalArgumentException("The view is not a child " +
-                                                       "of CoordinatorLayout")
+                ?: throw IllegalArgumentException("The view is not a child " +
+                        "of CoordinatorLayout")
         params.behavior as? CoordinatorLayout.Behavior<View>
-        ?: throw IllegalArgumentException("The view is not associated " +
-                                          "with FloatingActionButton.Behavior")
+                ?: throw IllegalArgumentException("The view is not associated " +
+                        "with FloatingActionButton.Behavior")
     }
     set(behavior) {
         (layoutParams as CoordinatorLayout.LayoutParams).behavior =
@@ -297,6 +276,21 @@ fun View.onMeasurePrintParams(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         View.MeasureSpec.EXACTLY -> println("Height MeasureSpec mode = EXACTLY $heightSpecSize")
         else -> println("Height MeasureSpec mode = NO SPEC MODE ($heightMeasureSpec)")
     }
+}
+
+@Suppress("unused")
+fun View.setSingleClickListener(interval: Long = 500L, action: () -> Unit) {
+    setOnClickListener(object : View.OnClickListener {
+        private var lastClickTime: Long = 0
+
+        override fun onClick(view: View) {
+            val now = SystemClock.elapsedRealtime()
+            if (now - lastClickTime >= interval) {
+                lastClickTime = now
+                action()
+            }
+        }
+    })
 }
 
 /**

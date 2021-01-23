@@ -445,7 +445,6 @@ public abstract class BeingManager<T extends Being>
             RUNNABLE_THREADS("runnableThreads.RunnableThreadsMgr"),
             EXECUTOR_SERVICE("executorService.ExecutorServiceMgr"),
             COMPLETION_SERVICE("completionService.ExecutorCompletionServiceMgr"),
-            ASYNC_TASK("asyncTask.AsyncTaskMgr"),
             PARALLEL_STREAMS("parallelStreams.ParallelStreamsMgr"),
             COMPLETABLE_FUTURES("completableFutures.CompletableFuturesMgr"),
             STRUCTURED_CONCURRENCY("structuredConcurrency.CoroutineMgr");

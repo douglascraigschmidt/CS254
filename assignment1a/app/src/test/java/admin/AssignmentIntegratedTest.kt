@@ -11,7 +11,7 @@ import edu.vandy.simulator.managers.palantiri.PalantiriManager
  * has been specified instrumented and unit tests are worth the
  * same value towards the final mark (50% for each class each).
  */
-abstract class AssignmentIntegratedTest: AssignmentTests() {
+abstract class AssignmentIntegratedTest: AssignmentTests(60) {
     abstract val beingManager: BeingManager.Factory.Type
     abstract val palantirManager: PalantiriManager.Factory.Type
     open val threadCount: Int = 10

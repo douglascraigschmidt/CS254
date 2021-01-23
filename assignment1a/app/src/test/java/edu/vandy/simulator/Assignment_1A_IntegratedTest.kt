@@ -1,7 +1,6 @@
 package edu.vandy.simulator
 
 import admin.AssignmentIntegratedTest
-import edu.vanderbilt.grader.rubric.Rubric
 import edu.vandy.simulator.managers.beings.BeingManager
 import edu.vandy.simulator.managers.palantiri.PalantiriManager
 import org.junit.Test
