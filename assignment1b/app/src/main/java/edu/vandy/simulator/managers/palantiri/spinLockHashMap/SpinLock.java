@@ -16,7 +16,6 @@ class SpinLock
      * "unlocked".
      */
     // TODO -- you fill in here.
-    public AtomicBoolean mOwner = new AtomicBoolean();
 
     /**
      * @return The AtomicBoolean used for compare-and-swap.
