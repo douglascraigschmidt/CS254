@@ -24,7 +24,7 @@ class SpinLock
     public AtomicBoolean getOwner() {
         // TODO -- you fill in here, replacing null with the proper
         // code.
-        return mOwner;
+        return null;
     }
 
     /**
@@ -39,7 +39,7 @@ class SpinLock
         // current value is false.
         // TODO -- you fill in here, replacing false with the proper
         // code.
-        return mOwner.compareAndSet(false, true);
+        return false;
     }
 
     /**
@@ -61,24 +61,6 @@ class SpinLock
         // check if a shutdown has been requested and if so throw a
         // cancellation exception.
         // TODO -- you fill in here.
-
-        for (; ; ) {
-            // Only try to get the lock if its null, which improves
-            // cache performance.
-            if (!mOwner.get() && tryLock()) {
-                // Break out of the loop if we got the lock.
-                break;
-            } else {
-                // Check if a shutdown has been requested and if so throw
-                // a cancellation exception.
-                if (isCancelled.get()) {
-                    throw new CancellationException("SpinLock cancelled.");
-                }
-
-                // Yield the thread to allow another thread to run.
-                Thread.yield();
-            }
-        }
     }
 
     /**
@@ -94,8 +76,5 @@ class SpinLock
 
         // Set mOwner's value to false, which atomically releases the
         // lock that's currently held.
-        if (!mOwner.getAndSet(false)) {
-            throw new IllegalMonitorStateException("Unlock called when not locked");
-        }
     }
 }
