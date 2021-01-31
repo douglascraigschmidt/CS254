@@ -1,0 +1,51 @@
+// Required by Vanderbilt grader - do not remove
+buildscript {
+	repositories { jcenter() }
+	dependencies { classpath 'edu.vanderbilt.grader:gradle-plugin:3.0.5.7' }
+}
+
+buildscript {
+    repositories {
+        jcenter()
+        google()
+    }
+
+    dependencies {
+        classpath 'com.android.tools.build:gradle:4.1.2'
+        if (file("$projectDir/admin/skeleton.gradle").isFile()) {
+            classpath "org.ajoberstar:grgit:1.9.3"
+        }
+    }
+}
+
+plugins {
+    id "org.jetbrains.kotlin.kapt" version "1.4.21" apply false
+    id "org.jetbrains.kotlin.jvm" version "1.4.21" apply false
+}
+
+allprojects {
+    repositories {
+        jcenter()
+        google()
+    }
+}
+
+task clean(type: Delete) {
+    delete rootProject.buildDir
+}
+
+if (file("$projectDir/admin/skeleton.gradle").isFile()) {
+    apply from: "$projectDir/admin/skeleton.gradle"
+}
+
+
+// Required by Vanderbilt grader - do not remove
+subprojects { proj ->
+	proj.repositories { jcenter() }
+	afterEvaluate {
+			if (proj.plugins.findPlugin('android') ?: proj.plugins.findPlugin('android-library')) {
+				proj.apply plugin: 'edu.vanderbilt.grader.plugin'
+				proj.dependencies { testImplementation 'edu.vanderbilt.grader:rubric:1.1' }
+			}
+	}
+}
