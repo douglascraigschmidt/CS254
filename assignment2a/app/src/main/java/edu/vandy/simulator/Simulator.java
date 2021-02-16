@@ -195,7 +195,7 @@ public class Simulator
         // the right state.
         if (mPalantiriManager == null
                 || !mPalantiriManager.getClass().getSimpleName().equals(palantiriManagerType.className)
-                || mPalantiriManager.getPalantirCount() != palantirCount) {
+                || mPalantiriManager.getPalantiriCount() != palantirCount) {
 
             // Construct an instance of the specified PalantiriManger type.
             mPalantiriManager =

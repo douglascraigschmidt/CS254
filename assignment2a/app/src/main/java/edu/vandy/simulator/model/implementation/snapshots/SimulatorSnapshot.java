@@ -64,7 +64,7 @@ public class SimulatorSnapshot extends BaseSnapshot<Type, State>
         mBeingCount =
                 component.getBeingManager().getBeingCount();
         mPalantirCount =
-                component.getPalantirManager().getPalantirCount();
+                component.getPalantirManager().getPalantiriCount();
         mGazingIterations =
                 component.getBeingManager().getGazingIterations();
     }

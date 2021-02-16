@@ -106,14 +106,3 @@ dependencies {
     androidTestImplementation "androidx.test.espresso:espresso-core:3.3.0"
     androidTestImplementation 'androidx.test.ext:junit:1.1.2'
 }
-
-//task finalizeSkeleton2(group: "_testing_") {
-////task finalizeSkeleton2(group: "_testing_", type: GradleBuild) {
-//    afterEvaluate {
-//        println(">>>>>>>>>>>>>> afterEvaluate 2 <<<<<<<<<<<<<<<<<<<<<")
-//        project.tasks.each {
-//            println it
-//        }
-//    }
-//}
-

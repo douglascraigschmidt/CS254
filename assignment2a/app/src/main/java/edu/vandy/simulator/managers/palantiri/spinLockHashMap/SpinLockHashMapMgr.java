@@ -43,30 +43,6 @@ public class SpinLockHashMapMgr
     
 
     /**
-     * @return The "spin lock" instance.
-     */
-    public CancellableLock getSpinLock() {
-        // TODO -- you fill in here, replacing null with the proper code.
-        return null;
-    }
-
-    /**
-     * @return The available palantiri semaphore instance.
-     */
-    public Semaphore getAvailablePalantiri() {
-        // TODO -- you fill in here replacing this statement with your solution.
-        return null;
-    }
-
-    /**
-     * @return The palantiri map.
-     */
-    public HashMap<Palantir, Boolean> getPalantiriMap() {
-        // TODO -- you fill in here replacing this statement with your solution.
-        return null;
-    }
-
-    /**
      * Called to allow subclass implementations the opportunity
      * to setup fields and initialize field values.
      */
@@ -74,12 +50,6 @@ public class SpinLockHashMapMgr
     protected void buildModel() {
         // Create a new HashMap.
         mPalantiriMap = new HashMap<>();
-
-        // Iterate through the List of Palantiri returned via the
-        // getPalantiri() factory method and initialize each key in
-        // the mPalantiriMap with "true" to indicate it's available.
-        // TODO -- you fill in here.
-        
 
         // Initialize the Semaphore to use a "fair" implementation
         // that mediates concurrent access to the given Palantiri.
@@ -89,24 +59,39 @@ public class SpinLockHashMapMgr
         if (Assignment.isUndergraduate()) {
             // UNDERGRADUATES:
             //
-            // Initialize the CancellableLock by replacing the
-            // null value with your SpinLock implementation.
+            // NOTE: You must set the assignment type to Undergraduate
+            // in edu.vandy.simulator.utils.Student.kt.
             //
-            // NOTE: You also will need to set the assignment type
-            // to UNDERGRADUATE in the edu.vandy.simulator.utils.Assignment.
+            // Initialize the CancellableLock by replacing the null
+            // value with your SpinLock implementation.
 
+            // TODO -- you fill in here.
+            
+
+            // Iterate through the List of Palantiri returned via the
+            // getPalantiri() factory method and initialize each key
+            // in the mPalantiriMap with "true" to indicate it's
+            // available.
             // TODO -- you fill in here.
             
         } else if (Assignment.isGraduate()) {
             // GRADUATES:
             //
+            // NOTE: You must set the assignment type to Graduate in
+            // edu.vandy.simulator.utils.Student.kt.
+            // 
             // Initialize the CancellableLock by replacing the
             // null value with your ReentrantSpinLock implementation.
-            //
-            // NOTE: You also will need to set the assignment type
-            // to GRADUATE in the edu.vandy.simulator.utils.Assignment.
 
             // TODO -- you fill in here.
+            
+
+            // Use the List.forEach() method to iterate through the
+            // List of Palantiri returned via the getPalantiri()
+            // factory method and initialize each key in the
+            // mPalantiriMap with "true" to indicate it's available.
+            // TODO -- you fill in here.
+
             
         } else {
             throw new IllegalStateException("Invalid assignment type");
@@ -128,7 +113,9 @@ public class SpinLockHashMapMgr
         // available for use) occurs in a thread-safe manner.  Replace
         // the value of this key with "false" to indicate the Palantir
         // isn't available, return that palantir to the client, and
-        // release the spin-lock.
+        // release the spin-lock in a manner that is robust to
+        // exceptions.
+
         // TODO -- you fill in here.
         
 
@@ -145,16 +132,23 @@ public class SpinLockHashMapMgr
     }
 
     /**
-     * Returns the designated @code palantir to the PalantiriManager
-     * so it's available for other beings to use.
+     * Update the status of the designated {@code palantir} in the
+     * SpinLockHashMapMgr so it's available for other Beings to use.
      *
      * @param palantir The palantir to release back to the Palantiri pool
+     * @throws IllegalArgumentException if the {@code palantir} is invalid
      */
     @Override
-    protected void release(Palantir palantir) throws InterruptedException {
-        // Put the "true" value back into HashMap for the palantir key
-        // in a thread-safe manner and release the Semaphore if all
-        // works properly.
+    protected void release(Palantir palantir) {
+        // Update the status of the designated palantir in the
+        // SpinLockHashMapMgr so it's available for other Beings to
+        // use. This method should efficiently and robustly
+        // 1. Handle invalid palantir values, such as null values or
+        //    values that are not valid keys in the HashMap.
+        // 2. Lock and unlock the spin lock field correctly to ensure
+        //    mutually exclusive access to mutable shared state.
+        // 3. Only release the semaphore if the palantir parameter
+        //    is correct.
         // TODO -- you fill in here.
         
     }

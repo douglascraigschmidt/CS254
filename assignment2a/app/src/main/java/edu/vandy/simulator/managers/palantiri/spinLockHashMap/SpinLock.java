@@ -34,7 +34,7 @@ class SpinLock
      */
     @Override
     public boolean tryLock() {
-        // Try to set mOwner's value to true, which succeeds iff its
+        // Try to set owner's value to true, which succeeds iff its
         // current value is false.
         // TODO -- replace the following line with your solution.
         throw new RuntimeException("TODO: remove this line.");
@@ -54,7 +54,7 @@ class SpinLock
     @Override
     public void lock(Supplier<Boolean> isCancelled)
             throws CancellationException {
-        // Loop trying to set mOwner's value to true, which succeeds
+        // Loop trying to set the owner's value to true, which succeeds
         // iff its current value is false.  Each iteration should also
         // check if a shutdown has been requested and if so throw a
         // cancellation exception.
@@ -68,9 +68,9 @@ class SpinLock
      */
     @Override
     public void unlock() {
-        // Atomically release the lock that's currently held by
-        // mOwner. If the lock is not held by mOwner, then throw
-        // an IllegalMonitorStateException.
+        // Atomically release the lock that's currently held by the
+        // owner. If the lock is not held by the owner, then throw an
+        // IllegalMonitorStateException.
 
         // TODO -- you fill in here.
         

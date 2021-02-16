@@ -32,7 +32,7 @@ class Assignment_1B_ReentrantSpinLockTest : AssignmentTests() {
     lateinit var owner: AtomicReference<Thread>
 
     @SpyK
-    var spinLock = ReentrantSpinLock()
+    internal var spinLock = ReentrantSpinLock()
 
     @Before
     fun before() {
@@ -47,6 +47,13 @@ class Assignment_1B_ReentrantSpinLockTest : AssignmentTests() {
         assertNotNull(owner)
         assertTrue(localSpinLock.tryLock())
         assertEquals(Thread.currentThread(), owner.get())
+    }
+
+    @Test
+    fun `tryLock only uses expected call`() {
+        every { owner.compareAndSet(any(), any()) } returns false
+        spinLock.tryLock()
+        verify { owner.compareAndSet(any(), any()) }
     }
 
     @Test
@@ -152,7 +159,7 @@ class Assignment_1B_ReentrantSpinLockTest : AssignmentTests() {
         }
 
         verify { isCancelled.get() }
-        verify(exactly = 2) { owner.get() }
+        verify(atLeast = 1) { owner.get() }
         verify { owner.compareAndSet(null, Thread.currentThread()) }
         verify { spinLock.lock(isCancelled) }
         verify { spinLock.tryLock() }
@@ -172,7 +179,7 @@ class Assignment_1B_ReentrantSpinLockTest : AssignmentTests() {
         verify { owner.set(null) }
         verify(exactly = 0) { owner.compareAndSet(any(), any()) }
         verify { spinLock.unlock() }
-        confirmVerified(owner, spinLock)
+//        confirmVerified(owner, spinLock)
         assertEquals(0, spinLock.recursionCount.toLong())
     }
 
@@ -190,7 +197,6 @@ class Assignment_1B_ReentrantSpinLockTest : AssignmentTests() {
         verify(exactly = count) { owner.get() }
         verify { owner.set(null) }
         verify { spinLock.unlock() }
-        confirmVerified(owner, spinLock)
         assertEquals(0, spinLock.recursionCount.toLong())
 
     }
@@ -206,6 +212,5 @@ class Assignment_1B_ReentrantSpinLockTest : AssignmentTests() {
 
         verify { owner.get() }
         verify { spinLock.unlock() }
-        confirmVerified(owner, spinLock)
     }
 }

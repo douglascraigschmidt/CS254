@@ -1,36 +1,39 @@
 package edu.vandy.simulator.managers.palantiri.spinLockHashMap
 
 import admin.AssignmentTests
-import com.nhaarman.mockitokotlin2.*
+import admin.injectInto
+import admin.value
 import edu.vandy.simulator.managers.palantiri.Palantir
 import edu.vandy.simulator.utils.Assignment.isGraduate
 import edu.vandy.simulator.utils.Assignment.isUndergraduate
 import edu.vandy.simulator.utils.Student
 import edu.vandy.simulator.utils.Student.Type.Graduate
+import io.mockk.*
+import io.mockk.impl.annotations.MockK
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
-import org.mockito.InjectMocks
-import org.mockito.Mock
-import org.mockito.Mockito.inOrder
-import java.lang.RuntimeException
+import java.lang.IllegalArgumentException
 import java.util.*
 import java.util.concurrent.Semaphore
+import java.util.function.Consumer
 
 @ExperimentalCoroutinesApi
 class Assignment_1B_SpinLockHashMapMgrTest : AssignmentTests() {
-    @Mock
+    @MockK
     internal lateinit var cancellableLockMock: CancellableLock
 
-    @Mock
+    @MockK
     lateinit var semaphoreMock: Semaphore
 
-    @InjectMocks
-    lateinit var manager: SpinLockHashMapMgr
+    private val manager = spyk<SpinLockHashMapMgr>()
 
-    @InjectMocks
-    private val managerMock = mock<SpinLockHashMapMgr>()
+    private val spinLock: CancellableLock
+        get() = manager.value(CancellableLock::class.java)
+
+    private val availablePalantiri: Semaphore
+        get() = manager.value(Semaphore::class.java)
 
     // In order to put mock entries in this map, it can't be a mock.
     private val palantiriMap = HashMap<Palantir, Boolean>(PALANTIRI_COUNT)
@@ -43,16 +46,19 @@ class Assignment_1B_SpinLockHashMapMgrTest : AssignmentTests() {
     @Before
     fun before() {
         repeat(PALANTIRI_COUNT) {
-            mock<Palantir>().let { mockPalantir ->
-                palantiri.add(mockPalantir)
-                palantiriMap[mockPalantir] = true
+            mockk<Palantir>().let {
+                palantiri.add(it)
+                palantiriMap[it] = true
             }
         }
 
         // mPalantiriMap and mPalantiri can't be mocked themselves,
         // only their contents can be mocked.
-        manager.mPalantiriMap = palantiriMap
-        manager.mPalantiri = palantiri
+        palantiriMap.injectInto(manager)
+        palantiri.injectInto(manager)
+
+        cancellableLockMock.injectInto(manager)
+        semaphoreMock.injectInto(manager)
     }
 
     @Test
@@ -67,63 +73,92 @@ class Assignment_1B_SpinLockHashMapMgrTest : AssignmentTests() {
         buildModel()
     }
 
-    private fun buildModel() {
+    @Test
+    fun `buildModel creates proper palantiri hashmap`() {
         // Note that the buildModel method does not use the
         // SpinLockHashMapMgr created in the @Before setup
         // method because it needs to test the real Semaphore,
         // SpinLock, and Map fields for proper initialization.
-        val manager: SpinLockHashMapMgr = mock()
-        val mockPalantiri = (1..PALANTIRI_COUNT).map { mock<Palantir>() }
+        val mockPalantiri = (1..PALANTIRI_COUNT).map { mockk<Palantir>() }
 
-        whenever(manager.palantiri).thenReturn(mockPalantiri)
-        doCallRealMethod().whenever(manager).buildModel()
-        doCallRealMethod().whenever(manager).availablePalantiri
-        doCallRealMethod().whenever(manager).spinLock
-        doCallRealMethod().whenever(manager).palantiriMap
+        every { manager.palantiri } returns mockPalantiri
 
         // Call SUT method.
         manager.buildModel()
 
         if (isUndergraduate()) {
-            assertTrue(manager.spinLock is SpinLock)
+            assertTrue(spinLock is SpinLock)
         } else if (isGraduate()) {
-            assertTrue(manager.spinLock is ReentrantSpinLock)
+            assertTrue(spinLock is ReentrantSpinLock)
         }
 
-        assertNotNull(
-                "getAvailablePalantiri() should not return null.",
-                manager.availablePalantiri)
-        assertEquals(
-                "The available palantiri semaphore should 0 permits.",
-                0,
-                manager.availablePalantiri.queueLength.toLong())
-        assertNotNull(
-                "getSpinLock() accessor should not return null.",
-                manager.spinLock)
-        assertNotNull(
-                "getPalantiriMap() should not return null.",
-                manager.palantiriMap)
         assertEquals(
                 "getPalantiriMap() should contain $PALANTIRI_COUNT entries.",
                 PALANTIRI_COUNT.toLong(),
-                manager.palantiriMap.size.toLong())
+                manager.mPalantiriMap.size.toLong())
+    }
+
+    private fun buildModel() {
+        val list = mockk<List<Palantir>>(relaxed = true)
+        manager.mPalantiri = list
+        manager.mPalantiriMap = mockk<HashMap<Palantir, Boolean>>()
+
+        every { manager.palantiri } returns list
+        every { list.forEach(any<Consumer<Palantir>>()) } returns Unit
+        every { list.size } returns PALANTIRI_COUNT
+
+        // Call SUT method.
+        manager.buildModel()
+
+        verify {
+            list.size
+            manager.palantiri
+        }
+
+        if (isUndergraduate()) {
+            try {
+                verify { list.iterator() }
+            } catch (t: Throwable) {
+                verify { list.forEach(any<Consumer<Palantir>>()) }
+            }
+
+            assertTrue(spinLock is SpinLock)
+        } else if (isGraduate()) {
+            verify { list.forEach(any<Consumer<Palantir>>()) }
+            assertTrue(spinLock is ReentrantSpinLock)
+        }
+
+
+        assertNotNull(availablePalantiri)
+        assertEquals(
+                "The available palantiri semaphore should 0 permits.",
+                0,
+                availablePalantiri.queueLength.toLong())
+        assertNotNull(
+                "getSpinLock() accessor should not return null.",
+                spinLock)
+        assertNotNull(
+                "getPalantiriMap() should not return null.",
+                manager.mPalantiriMap)
+//        assertEquals(
+//                "getPalantiriMap() should contain $PALANTIRI_COUNT entries.",
+//                PALANTIRI_COUNT.toLong(),
+//                manager.palantiriMap.size.toLong())
     }
 
     @Test
     fun `acquire a palantir when all palantiri are available`() {
-        doNothing().whenever(cancellableLockMock).lock(any())
-        doNothing().whenever(cancellableLockMock).unlock()
-        doNothing().whenever(semaphoreMock).acquire()
-
         // SUT
         val palantir = manager.acquire()
 
         assertNotNull("Acquire should return a non-null Palantir", palantir)
         val locked = palantiriMap.values.count { !it }
         assertEquals("Only 1 palantir should be locked", 1, locked)
-        verify(semaphoreMock).acquire()
-        verify(cancellableLockMock).lock(any())
-        verify(cancellableLockMock).lock(any())
+        verify { semaphoreMock.acquire() }
+        verify { cancellableLockMock.lock(any()) }
+        verify { cancellableLockMock.unlock() }
+
+        confirmVerified(cancellableLockMock, semaphoreMock)
     }
 
     /**
@@ -134,10 +169,6 @@ class Assignment_1B_SpinLockHashMapMgrTest : AssignmentTests() {
         lockAllPalantiri()
         val unlockedPalantir = palantiri[PALANTIRI_COUNT - 1]
         unlockPalantir(unlockedPalantir)
-        doNothing().whenever(cancellableLockMock).lock(any())
-        doNothing().whenever(cancellableLockMock).unlock()
-        doNothing().whenever(semaphoreMock).acquire()
-        val inOrder = inOrder(cancellableLockMock, semaphoreMock)
 
         // SUT
         val palantir = manager.acquire()
@@ -146,12 +177,14 @@ class Assignment_1B_SpinLockHashMapMgrTest : AssignmentTests() {
         val locked = palantiriMap.values.count { !it }
         assertEquals("All $PALANTIRI_COUNT palantiri should be locked", PALANTIRI_COUNT, locked)
         assertSame("The only available Palantir should be returned", unlockedPalantir, palantir)
-        verify(semaphoreMock).acquire()
-        verify(cancellableLockMock).lock(any())
-        verify(cancellableLockMock).unlock()
-        inOrder.verify(semaphoreMock).acquire()
-        inOrder.verify(cancellableLockMock).lock(any())
-        inOrder.verify(cancellableLockMock).unlock()
+
+        verifyOrder {
+            semaphoreMock.acquire()
+            cancellableLockMock.lock(any())
+            cancellableLockMock.unlock()
+        }
+
+        confirmVerified(cancellableLockMock, semaphoreMock)
     }
 
     /**
@@ -159,10 +192,6 @@ class Assignment_1B_SpinLockHashMapMgrTest : AssignmentTests() {
      */
     @Test
     fun `acquire all available palantiri`() {
-        doNothing().whenever(cancellableLockMock).lock(any())
-        doNothing().whenever(cancellableLockMock).unlock()
-        doNothing().whenever(semaphoreMock).acquire()
-        val inOrder = inOrder(cancellableLockMock, semaphoreMock)
         for (i in 1..PALANTIRI_COUNT) {
             // SUT
             val palantir = manager.acquire()
@@ -171,136 +200,183 @@ class Assignment_1B_SpinLockHashMapMgrTest : AssignmentTests() {
             val locked = palantiriMap.values.count { !it }
             assertEquals("$i palantiri should be acquired (locked).", i, locked)
         }
-        verify(semaphoreMock, times(PALANTIRI_COUNT)).acquire()
-        verify(cancellableLockMock, times(PALANTIRI_COUNT)).lock(any())
-        verify(cancellableLockMock, times(PALANTIRI_COUNT)).unlock()
-        inOrder.verify(semaphoreMock).acquire()
-        inOrder.verify(cancellableLockMock).lock(any())
-        inOrder.verify(cancellableLockMock).unlock()
+
+        verify(exactly = PALANTIRI_COUNT) {
+            semaphoreMock.acquire()
+            cancellableLockMock.lock(any())
+            cancellableLockMock.unlock()
+        }
+
+        verifyOrder {
+            semaphoreMock.acquire()
+            cancellableLockMock.lock(any())
+            cancellableLockMock.unlock()
+        }
+
+        confirmVerified(cancellableLockMock, semaphoreMock)
     }
 
     @Test
     fun `acquire does not call unlock if semaphore acquire fails`() {
-        doThrow(SimulatedException()).whenever(semaphoreMock).acquire()
-        doCallRealMethod().whenever(managerMock).acquire()
+        every { semaphoreMock.acquire() } throws SimulatedException()
 
         // SUT
-        assertThrows<SimulatedException>("Exception should have been thrown") {
-            managerMock.acquire()
+        assertThrows(SimulatedException::class.java) {
+            manager.acquire()
         }
 
-        verify(managerMock).acquire()
-        verifyNoMoreInteractions(managerMock, cancellableLockMock)
+        verify {
+            semaphoreMock.acquire()
+        }
+
+        confirmVerified(cancellableLockMock, semaphoreMock)
     }
 
     @Test
     fun `acquire does not call unlock if lock fails`() {
-        doThrow(SimulatedException()).whenever(cancellableLockMock).lock(any())
-        doCallRealMethod().whenever(managerMock).acquire()
+        every { cancellableLockMock.lock(any()) } throws SimulatedException()
 
         // SUT
-        assertThrows<SimulatedException>("Exception should have been thrown") {
-            managerMock.acquire()
+        assertThrows(SimulatedException::class.java) {
+            manager.acquire()
         }
 
-        verify(managerMock).acquire()
-        verify(semaphoreMock).acquire()
-        verify(cancellableLockMock).lock(any())
-        verifyNoMoreInteractions(managerMock, cancellableLockMock)
+        verify { semaphoreMock.acquire() }
+        verify { cancellableLockMock.lock(any()) }
+        confirmVerified(cancellableLockMock, semaphoreMock)
     }
 
     @Test
     fun `release a null palantir`() {
-        try {
-            // SUT
+        assertThrows(IllegalArgumentException::class.java) {
             manager.release(null)
-        } catch (e: Exception) {
-            fail("Release should not throw an exception if a " +
-                    "null Palantir is passed as a parameter.")
         }
+
+        confirmVerified(cancellableLockMock, semaphoreMock)
     }
 
 
     @Test
     fun `release a locked palantir`() {
-        val mockPalantiriMap: HashMap<Palantir, Boolean> = mock(lenient = true)
-        val mockPalantir: Palantir = mock()
+        val mockPalantiriMap = mockk<HashMap<Palantir, Boolean>>()
+        val mockPalantir = mockk<Palantir>()
         manager.mPalantiriMap = mockPalantiriMap
 
-        doReturn(false).whenever(mockPalantiriMap).replace(eq(mockPalantir), eq(true))
-        doReturn(false).whenever(mockPalantiriMap).put(eq(mockPalantir), eq(true))
-        val inOrder = inOrder(cancellableLockMock, mockPalantiriMap, semaphoreMock)
+        every { mockPalantiriMap.replace(mockPalantir, true) } returns false
+        every { mockPalantiriMap.put(mockPalantir, true) } returns false
 
         // SUT
         manager.release(mockPalantir)
 
-        inOrder.verify(cancellableLockMock).lock(any())
         try {
-            inOrder.verify(mockPalantiriMap).replace(eq(mockPalantir), eq(true))
+            verifyOrder {
+                cancellableLockMock.lock(any())
+                mockPalantiriMap.replace(eq(mockPalantir), eq(true))
+                cancellableLockMock.unlock()
+                semaphoreMock.release()
+            }
         } catch (t: Throwable) {
-            inOrder.verify(mockPalantiriMap).put(eq(mockPalantir), eq(true))
+
+            verifyOrder {
+                cancellableLockMock.lock(any())
+                mockPalantiriMap.put(eq(mockPalantir), eq(true))
+                cancellableLockMock.unlock()
+                semaphoreMock.release()
+            }
         }
-        inOrder.verify(cancellableLockMock).unlock()
-        inOrder.verify(semaphoreMock).release()
+
+        confirmVerified(mockPalantiriMap, mockPalantir, cancellableLockMock, semaphoreMock)
     }
 
     @Test
     fun `release an unlocked palantir`() {
-        val mockPalantiriMap: HashMap<Palantir, Boolean> = mock(lenient = true)
-        val mockPalantir: Palantir = mock()
+        val mockPalantiriMap = mockk<HashMap<Palantir, Boolean>>()
+        val mockPalantir = mockk<Palantir>()
         manager.mPalantiriMap = mockPalantiriMap
 
-        doReturn(true).whenever(mockPalantiriMap).replace(eq(mockPalantir), eq(true))
-        doReturn(true).whenever(mockPalantiriMap).put(eq(mockPalantir), eq(true))
-        val inOrder = inOrder(cancellableLockMock, mockPalantiriMap, semaphoreMock)
+        every { mockPalantiriMap.replace(mockPalantir, true) } returns true
+        every { mockPalantiriMap.put(mockPalantir, true) } returns true
 
         // SUT
-        manager.release(mockPalantir)
-
-        inOrder.verify(cancellableLockMock).lock(any())
-        try {
-            inOrder.verify(mockPalantiriMap).replace(eq(mockPalantir), eq(true))
-        } catch (t: Throwable) {
-            inOrder.verify(mockPalantiriMap).put(eq(mockPalantir), eq(true))
+        assertThrows(IllegalArgumentException::class.java) {
+            manager.release(mockPalantir)
         }
-        inOrder.verify(cancellableLockMock).unlock()
-        verify(semaphoreMock, never()).release()
+
+        try {
+            verifyOrder {
+                cancellableLockMock.lock(any())
+                mockPalantiriMap.replace(mockPalantir, true)
+                cancellableLockMock.unlock()
+            }
+        } catch (t: Throwable) {
+            verifyOrder {
+                cancellableLockMock.lock(any())
+                mockPalantiriMap.put(mockPalantir, true)
+                cancellableLockMock.unlock()
+            }
+        }
+
+        verify(exactly = 0) { semaphoreMock.release() }
+
+        confirmVerified(mockPalantiriMap, mockPalantir, cancellableLockMock, semaphoreMock)
     }
 
     @Test
     fun `release all acquired palantiri`() {
         lockAllPalantiri()
-        doNothing().whenever(cancellableLockMock).lock(any())
-        doNothing().whenever(cancellableLockMock).unlock()
 
         // SUT
         palantiri.forEach { manager.release(it) }
 
-        val inOrder = inOrder(cancellableLockMock)
-        verify(cancellableLockMock, times(PALANTIRI_COUNT)).lock(any())
-        verify(cancellableLockMock, times(PALANTIRI_COUNT)).unlock()
-        inOrder.verify(cancellableLockMock).lock(any())
-        inOrder.verify(cancellableLockMock).unlock()
+        verify(exactly = PALANTIRI_COUNT) {
+            semaphoreMock.release()
+            cancellableLockMock.unlock()
+            cancellableLockMock.lock(any())
+        }
+
         val unlocked = palantiriMap.values.count { it }
+
         assertEquals("All $PALANTIRI_COUNT Palantiri should be unlocked.",
                 PALANTIRI_COUNT, unlocked)
+
+        confirmVerified(cancellableLockMock, semaphoreMock)
+    }
+
+    @Test
+    fun `release must call cancellable lock and semaphore methods in the correct order`() {
+        lockAllPalantiri()
+        manager.release(palantiri[0])
+
+        verifySequence {
+            cancellableLockMock.lock(any())
+            cancellableLockMock.unlock()
+            semaphoreMock.release()
+        }
     }
 
     @Test
     fun `release does not unlock the lock if the lock call is interrupted`() {
-        doThrow(SimulatedException()).whenever(cancellableLockMock).lock(any())
-        doCallRealMethod().whenever(managerMock).release(any())
+        every { cancellableLockMock.lock(any()) } throws SimulatedException()
 
-        val palantir = Palantir(managerMock)
+        val palantir = Palantir(manager)
 
         // SUT
-        assertThrows<SimulatedException>("Exception should have been thrown") {
-            managerMock.release(palantir)
+        assertThrows(SimulatedException::class.java) {
+            manager.release(palantir)
         }
 
-        verify(managerMock).release(palantir)
-        verify(cancellableLockMock).lock(any())
-        verifyNoMoreInteractions(managerMock, cancellableLockMock)
+        verify { cancellableLockMock.lock(any()) }
+        confirmVerified(cancellableLockMock, semaphoreMock)
+    }
+
+    @Test
+    fun `release never throws a NullPointerException`() {
+        val palantir = Palantir(manager)
+
+        // SUT
+        assertThrows(IllegalArgumentException::class.java) {
+            manager.release(palantir)
+        }
     }
 
     private fun lockAllPalantiri() {

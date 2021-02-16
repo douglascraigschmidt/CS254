@@ -96,7 +96,7 @@ public abstract class PalantiriManager
     /**
      * @return The number of Palantiri in this model.
      */
-    public int getPalantirCount() {
+    public int getPalantiriCount() {
         return getPalantiri().size();
     }
 

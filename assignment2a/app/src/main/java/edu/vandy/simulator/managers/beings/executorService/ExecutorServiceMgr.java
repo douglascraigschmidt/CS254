@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.ThreadFactory;
 
 import edu.vandy.simulator.Controller;
 import edu.vandy.simulator.managers.beings.BeingManager;
@@ -90,13 +91,14 @@ public class ExecutorServiceMgr
     }
 
     /**
-     * Creates a fixed-size xthread pool executor service.
+     * Creates a fixed-size thread pool executor service.
      *
      * @param size The number of threads in the thread pool
      * @return A fixed-sized thread pool executor
      */
     ExecutorService createExecutorService(int size) {
-        // TODO -- you fill in here replacing this statement with your solution.
+        // TODO -- you fill in here replacing this statement with your
+        // solution.
         return null;
     }
 
@@ -106,22 +108,22 @@ public class ExecutorServiceMgr
      */
     void beginBeingThreadPool() {
         // All STUDENTS:
-        // Create an ExecutorService instance that contains a
-        // fixed-size pool of threads. Use the getThreadCount()
-        // helper method to set the number of threads in this pool
-        // This helper method retrieves the thread count from the
-        // application's settings panel thereby allowing you to
-        // dynamically tune the pool size at run time and observe
-        // how this size affects the level of concurrency).
-        // Call the BeingManager.getBeings() method to iterate through
-        // the BeingCallables, submit each BeingCallable to the
-        // ExecutorService, and add it to the list of BeingCallable
-        // futures.
+        // Call the createExecutorService() factory method to create
+        // an ExecutorService instance that contains a fixed-size pool
+        // of threads. Use the getThreadCount() helper method to set
+        // the number of threads in this pool This helper method
+        // retrieves the thread count from the application's settings
+        // panel thereby allowing you to dynamically tune the pool
+        // size at run time and observe how this size affects the
+        // level of concurrency).  Call the BeingManager.getBeings()
+        // method to iterate through the BeingCallables, submit each
+        // BeingCallable to the ExecutorService, and add it to the
+        // list of BeingCallable futures.
 
         // GRADUATE STUDENTS:
-        // Use a Java 8 stream to submit each BeingCallable and
-        // collect the results into the list of BeingCallable futures.
-        // Undergraduate students are free to use a Java 8 stream, but
+        // Use a Java Stream to submit each BeingCallable and collect
+        // the results into the list of BeingCallable futures.
+        // Undergraduate students are free to use a Java Stream, but
         // it's not required.
 
         // Call method to create an ExecutorService instance that

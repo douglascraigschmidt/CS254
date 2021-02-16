@@ -50,8 +50,7 @@ public class ReentrantSpinLock
 
     /**
      * Acquire the lock. If the lock is not available then the current
-     * thread becomes disabled for thread scheduling purposes and lies
-     * dormant until the lock has been acquired.
+     * thread spins until the lock has been acquired.
      *
      * @param isCancelled Supplier that is called to see if the attempt
      *                    to lock should be abandoned due to a pending

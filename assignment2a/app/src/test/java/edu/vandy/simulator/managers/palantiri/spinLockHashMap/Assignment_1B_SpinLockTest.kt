@@ -1,23 +1,21 @@
 package edu.vandy.simulator.managers.palantiri.spinLockHashMap
 
 import admin.AssignmentTests
-import com.nhaarman.mockitokotlin2.whenever
-import edu.vandy.simulator.utils.Student
+import admin.injectInto
 import edu.vandy.simulator.utils.Student.Type.Undergraduate
+import io.mockk.confirmVerified
+import io.mockk.every
+import io.mockk.impl.annotations.MockK
+import io.mockk.impl.annotations.SpyK
+import io.mockk.verify
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import org.junit.Assert.assertTrue
-import org.junit.Assert.fail
 import org.junit.Before
 import org.junit.Test
-import org.mockito.ArgumentMatchers
-import org.mockito.InjectMocks
-import org.mockito.Mock
-import org.mockito.Mockito
-import org.mockito.Mockito.*
-import java.lang.RuntimeException
 import java.util.concurrent.CancellationException
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.Supplier
+import kotlin.random.Random
 
 /**
  * Run with power mock and prepare the Thread
@@ -25,79 +23,99 @@ import java.util.function.Supplier
  */
 @ExperimentalCoroutinesApi
 class Assignment_1B_SpinLockTest : AssignmentTests() {
-    @Mock
+    @MockK
     lateinit var isCancelled: Supplier<Boolean>
 
-    @Mock
+    @MockK
     lateinit var owner: AtomicBoolean
 
-    @InjectMocks
-    internal lateinit var spinLock: SpinLock
+    @SpyK
+    internal var spinLock = SpinLock()
+
+    private val responses: List<Boolean> =
+            MutableList(Random.nextInt(10, 20)) {
+                false
+            }.apply {
+                add(true)
+            }.toList()
 
     @Before
     fun before() {
+        owner.injectInto(spinLock)
         runAs(Undergraduate)
     }
 
     @Test
-    fun tryLockTest() {
-        whenever(owner.compareAndSet(false, true)).thenReturn(true)
-        // Call the SUT method.
-        val locked = spinLock.tryLock()
-        verify(owner, times(1)).compareAndSet(false, true)
-        assertTrue("tryLock should return true", locked)
+    fun `tryLock uses correct calls`() {
+        every { owner.compareAndSet(false, true) } returns true
+        assertTrue(spinLock.tryLock())
+        verify { owner.compareAndSet(false, true) }
+        confirmVerified(owner)
     }
 
     @Test
-    fun lockIsUnlockedTest() {
-        whenever(owner.compareAndSet(false, true)).thenReturn(true)
-        // Call the SUT method.
+    fun `locks when not already locked`() {
+        every { spinLock.tryLock() } returns true
+        every { owner.get() } returns false
         spinLock.lock(isCancelled)
-        verify(isCancelled, never()).get()
-        verify(owner, times(1)).compareAndSet(false, true)
+        verify(exactly = 1) { spinLock.tryLock() }
+        verify(exactly = 1) { owner.get() }
+        confirmVerified(owner, isCancelled)
     }
 
     @Test
-    fun lockIsLockedTest() {
-        whenever(owner.compareAndSet(false, true))
-                .thenReturn(false)
-                .thenReturn(true)
-        whenever(isCancelled.get()).thenReturn(false)
-        // Call the SUT method.
+    fun `lock only calls tryLock when required`() {
+        every { spinLock.tryLock() } returns true
+        every { owner.get() } returnsMany responses.map { !it }
+        every { isCancelled.get() } returns false
         spinLock.lock(isCancelled)
-        verify(isCancelled, times(1)).get()
-        verify(owner, times(2)).compareAndSet(false, true)
+        verify(exactly = 1) { spinLock.tryLock() }
+        verify(exactly = responses.size) { owner.get() }
+        verify(exactly = responses.size - 1) { isCancelled.get() }
+        confirmVerified(owner, isCancelled)
     }
 
     @Test
-    fun lockIsLockedAndThenCancelledTest() {
-        whenever(owner.compareAndSet(false, true))
-                .thenReturn(false)
-                .thenReturn(true)
-        whenever(isCancelled.get()).thenReturn(true)
-
-        try {
-            // Call the SUT method.
-            spinLock.lock(isCancelled)
-            fail("lock() should throw a CancellationException when isCancelled() returns true.")
-        } catch (e: CancellationException) {
-            verify(isCancelled, times(1)).get()
-            verify(owner, times(1)).compareAndSet(false, true)
+    fun `lock spins until acquired`() {
+        every { spinLock.tryLock() } returnsMany responses
+        every { isCancelled.get() } returns false
+        every { owner.get() } returns false
+        spinLock.lock(isCancelled)
+        verify(exactly = responses.size) {
+            spinLock.tryLock()
+            owner.get()
         }
+        verify(exactly = responses.size - 1) {
+            isCancelled.get()
+        }
+        confirmVerified(owner, isCancelled)
+    }
+
+    @Test
+    fun `lock spins until cancelled`() {
+        every { spinLock.tryLock() } returns false
+        every { isCancelled.get() } returnsMany responses
+        every { owner.get() } returns false
+        assertThrows<CancellationException>("Should throw a CancellationException") {
+            spinLock.lock(isCancelled)
+        }
+        verify(exactly = responses.size) {
+            spinLock.tryLock()
+            owner.get()
+        }
+        verify(exactly = responses.size) {
+            isCancelled.get()
+        }
+        confirmVerified(owner, isCancelled)
     }
 
     @Test
     fun `unlock should release a held lock`() {
-        lenient().whenever(owner.get()).thenReturn(true)
-        lenient().whenever(owner.getAndSet(false)).thenReturn(true)
-
+        every { owner.getAndSet(false) } returns true
+        every { owner.get() } throws Exception("get() should not be called")
+        every { owner.set(any()) } throws Exception("set() should not be called")
         spinLock.unlock()
-
-        try {
-            verify(owner).get()
-            verify(owner).set(false)
-        } catch (t: Throwable) {
-            verify(owner).getAndSet(false)
-        }
+        verify { owner.getAndSet(false) }
+        confirmVerified(owner)
     }
 }

@@ -56,7 +56,7 @@ public class ArrayBlockingQueueMgr
      */
     @Override
     public void buildModel() {
-        int palantiriCount = getPalantirCount();
+        int palantiriCount = getPalantiriCount();
 
         // Initialize the ArrayBlockingQueue to use a "fair"
         // implementation that mediates concurrent access to the given

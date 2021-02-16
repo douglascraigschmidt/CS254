@@ -3,6 +3,7 @@ package edu.vandy.simulator.managers.beings.runnableThreads;
 import java.util.List;
 
 import edu.vandy.simulator.managers.beings.BeingManager;
+import edu.vandy.simulator.utils.ExceptionUtils;
 
 import static java.util.stream.Collectors.toList;
 
@@ -72,7 +73,7 @@ public class RunnableThreadsMgr
         // that calls the BeingManager.error() method to indicate an
         // unexpected exception "ex" occurred for thread "thr".
         // Undergraduates do not need to set this exception handler
-        // (though they are free to do to if they choose).
+        // (though they are free to do so if they choose).
         //
         // TODO -- you fill in here.
         
