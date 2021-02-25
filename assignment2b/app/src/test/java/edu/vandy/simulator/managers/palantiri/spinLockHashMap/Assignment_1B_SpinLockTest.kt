@@ -41,8 +41,8 @@ class Assignment_1B_SpinLockTest : AssignmentTests() {
 
     @Before
     fun before() {
-        runAs(Undergraduate)
         owner.injectInto(spinLock)
+        runAs(Undergraduate)
     }
 
     @Test
