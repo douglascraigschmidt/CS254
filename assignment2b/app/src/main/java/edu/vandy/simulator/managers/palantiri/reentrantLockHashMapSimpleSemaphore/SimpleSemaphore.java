@@ -69,7 +69,7 @@ public class SimpleSemaphore {
     /**
      * Return one permit to the semaphore.
      */
-    public void release() throw InterruptedException {
+    public void release() throws InterruptedException {
         // TODO -- you fill in here, make sure the lock is always
         // released, e.g., even if an exception occurs.
     }
