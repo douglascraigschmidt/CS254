@@ -3,8 +3,8 @@ package edu.vandy.simulator.managers.beings.runnableThreads
 import admin.AssignmentTests
 import edu.vandy.simulator.managers.palantiri.Palantir
 import io.mockk.*
-import org.junit.Assert.assertThrows
 import org.junit.Test
+import kotlin.test.assertFailsWith
 
 class Assignment_1A_BeingRunnableTest : AssignmentTests(timeoutSeconds = 10) {
 
@@ -43,9 +43,7 @@ class Assignment_1A_BeingRunnableTest : AssignmentTests(timeoutSeconds = 10) {
         every { being.releasePalantir(any()) } returns Unit
 
         // Make the SUT call.
-        assertThrows(ErrorException::class.java) {
-            being.acquirePalantirAndGaze()
-        }
+        assertFailsWith<ErrorException> { being.acquirePalantirAndGaze() }
 
         verifyOrder {
             being.acquirePalantir()
@@ -67,9 +65,7 @@ class Assignment_1A_BeingRunnableTest : AssignmentTests(timeoutSeconds = 10) {
         every { being.releasePalantir(any()) } returns Unit
 
         // Make the SUT call.
-        assertThrows(GazeException::class.java) {
-            being.acquirePalantirAndGaze()
-        }
+        assertFailsWith<GazeException> { being.acquirePalantirAndGaze() }
 
         verifyOrder {
             being.acquirePalantir()

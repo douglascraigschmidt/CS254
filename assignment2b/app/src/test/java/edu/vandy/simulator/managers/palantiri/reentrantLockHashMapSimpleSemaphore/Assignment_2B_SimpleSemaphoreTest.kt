@@ -1,32 +1,37 @@
 package edu.vandy.simulator.managers.palantiri.reentrantLockHashMapSimpleSemaphore
 
-import admin.AssignmentTests
-import admin.getField
-import admin.injectInto
-import admin.primitiveValue
-import com.nhaarman.mockitokotlin2.*
+import admin.*
+import io.mockk.every
+import io.mockk.impl.annotations.MockK
+import io.mockk.impl.annotations.SpyK
+import io.mockk.verify
+import io.mockk.verifyOrder
+import io.mockk.verifySequence
 import org.junit.Assert.*
+import org.junit.Before
 import org.junit.Test
-import org.mockito.InjectMocks
-import org.mockito.Mock
 import java.util.concurrent.locks.Condition
 import java.util.concurrent.locks.Lock
 import kotlin.random.Random
+import kotlin.test.assertFailsWith
 
 class Assignment_2B_SimpleSemaphoreTest : AssignmentTests() {
     private val palantirCount = Random.nextInt(5, 20)
 
-    @Mock
-    lateinit var lockMock: Lock
+    @MockK
+    lateinit var lock: Lock
 
-    @Mock
-    lateinit var notZeroMock: Condition
+    @MockK
+    lateinit var notZero: Condition
 
-    @Mock
-    lateinit var semaphoreMock: SimpleSemaphore
+    @SpyK
+    var semaphore = SimpleSemaphore()
 
-    @InjectMocks
-    lateinit var semaphore: SimpleSemaphore
+    @Before
+    fun before() {
+        lock.injectInto(semaphore)
+        notZero.injectInto(semaphore)
+    }
 
     private fun getPermits(): Int = semaphore.getField("", Int::class.java)
 
@@ -35,16 +40,23 @@ class Assignment_2B_SimpleSemaphoreTest : AssignmentTests() {
     }
 
     @Test
+    fun `Permits is declared correctly`() {
+        with(SimpleSemaphore::class.java.findField(Int::class.java)) {
+            assertTrue(hasModifiers("volatile"))
+        }
+    }
+
+    @Test
     fun `acquire one permit`() {
         setPermits(palantirCount)
 
-        val inOrder = inOrder(lockMock)
-
-        // SUT
         semaphore.acquire()
 
-        inOrder.verify(lockMock).lockInterruptibly()
-        inOrder.verify(lockMock).unlock()
+        verifySequence {
+            lock.lockInterruptibly()
+            lock.unlock()
+        }
+
         val expectedAvailablePermits = palantirCount - 1
         assertEquals(
                 "Available permits should be $expectedAvailablePermits",
@@ -56,20 +68,21 @@ class Assignment_2B_SimpleSemaphoreTest : AssignmentTests() {
     fun `acquire one permit when none are immediately available`() {
         val expectedAwaitCalls = Random.nextInt(3, 5)
         setPermits(-(expectedAwaitCalls - 1))
-        whenever(notZeroMock.await()).thenAnswer {
+        every { notZero.await() } answers {
             if (getPermits() <= 0) {
                 setPermits(getPermits() + 1)
             }
-            Unit
         }
-        val inOrder = inOrder(lockMock, notZeroMock)
 
-        // SUT
         semaphore.acquire()
 
-        inOrder.verify(lockMock).lockInterruptibly()
-        inOrder.verify(notZeroMock, times(expectedAwaitCalls)).await()
-        inOrder.verify(lockMock).unlock()
+        verifyOrder {
+            lock.lockInterruptibly()
+            notZero.await()
+            lock.unlock()
+        }
+        verify(exactly = expectedAwaitCalls) { notZero.await() }
+
         val expectedAvailablePermits = 0
         assertEquals(
                 "Available permits should be $expectedAvailablePermits",
@@ -80,17 +93,20 @@ class Assignment_2B_SimpleSemaphoreTest : AssignmentTests() {
     @Test
     fun `acquire all permits`() {
         setPermits(palantirCount)
-        val inOrder = inOrder(lockMock)
 
-        // SUT
         for (i in 0 until palantirCount) {
             semaphore.acquire()
         }
 
-        for (i in 0 until palantirCount) {
-            inOrder.verify(lockMock).lockInterruptibly()
-            inOrder.verify(lockMock).unlock()
+        verify(exactly = palantirCount) {
+            lock.lockInterruptibly()
+            lock.unlock()
         }
+        verifyOrder {
+            lock.lockInterruptibly()
+            lock.unlock()
+        }
+
         val expectedAvailablePermits = 0
         assertEquals(
                 "Available permits should be $expectedAvailablePermits",
@@ -101,18 +117,20 @@ class Assignment_2B_SimpleSemaphoreTest : AssignmentTests() {
     @Test
     fun `acquire multiple permits with await calls`() {
         setPermits(-palantirCount)
-        doAnswer {
-            setPermits(getPermits() + 1)
-            null
-        }.whenever(notZeroMock).await()
-        val inOrder = inOrder(lockMock, notZeroMock)
 
-        // SUT
+        every { notZero.await() } answers {
+            setPermits(getPermits() + 1)
+        }
+
         semaphore.acquire()
 
-        inOrder.verify(lockMock).lockInterruptibly()
-        inOrder.verify(notZeroMock, times(palantirCount + 1)).await()
-        inOrder.verify(lockMock).unlock()
+        verifyOrder {
+            lock.lockInterruptibly()
+            notZero.await()
+            lock.unlock()
+        }
+        verify(exactly = palantirCount + 1) { notZero.await() }
+
         val expectedAvailablePermits = 0
         assertEquals(
                 "Available permits should be $expectedAvailablePermits",
@@ -123,18 +141,18 @@ class Assignment_2B_SimpleSemaphoreTest : AssignmentTests() {
     @Test
     fun `acquire one permit with an await call`() {
         setPermits(0)
-        doAnswer {
+        every { notZero.await() } answers {
             setPermits(1)
-            null
-        }.whenever(notZeroMock).await()
-        val inOrder = inOrder(lockMock, notZeroMock)
+        }
 
-        // SUT
         semaphore.acquire()
 
-        inOrder.verify(lockMock).lockInterruptibly()
-        inOrder.verify(notZeroMock).await()
-        inOrder.verify(lockMock).unlock()
+        verifyOrder {
+            lock.lockInterruptibly()
+            notZero.await()
+            lock.unlock()
+        }
+
         val expectedAvailablePermits = 0
         assertEquals(
                 "Available permits should be $expectedAvailablePermits",
@@ -145,18 +163,14 @@ class Assignment_2B_SimpleSemaphoreTest : AssignmentTests() {
     @Test
     fun `acquire permit with await call interrupted`() {
         setPermits(0)
-        doThrow(InterruptedException("Mock interrupt")).whenever(notZeroMock).await()
-        val inOrder = inOrder(lockMock, notZeroMock)
+        every { notZero.await() } throws InterruptedException("Mock interrupt")
+        assertFailsWith<InterruptedException> { semaphore.acquire() }
 
-        // SUT
-        assertThrows<InterruptedException>(
-                "Interrupt should not be swallowed by call to acquire().") {
-            semaphore.acquire()
+        verifyOrder {
+            lock.lockInterruptibly()
+            notZero.await()
+            lock.unlock()
         }
-
-        inOrder.verify(lockMock).lockInterruptibly()
-        inOrder.verify(notZeroMock).await()
-        inOrder.verify(lockMock).unlock()
         val expectedAvailablePermits = 0
         assertEquals(
                 "Available permits should be $expectedAvailablePermits",
@@ -166,59 +180,69 @@ class Assignment_2B_SimpleSemaphoreTest : AssignmentTests() {
 
     @Test
     fun `acquire permit uninterruptibly with permits available`() {
-        doCallRealMethod().whenever(semaphoreMock).acquireUninterruptibly()
+        every { semaphore.acquire() } returns Unit
 
-        // SUT
-        semaphoreMock.acquireUninterruptibly()
+        semaphore.acquireUninterruptibly()
 
         assertFalse(Thread.currentThread().isInterrupted)
 
-        verify(semaphoreMock).acquireUninterruptibly()
-        verify(semaphoreMock).acquire()
-        verifyNoMoreInteractions(semaphoreMock)
+        verifySequence {
+            semaphore.acquireUninterruptibly()
+            semaphore.acquire()
+        }
     }
 
     @Test
     fun `acquire uninterruptibly should not directly modify permits`() {
         val permits = Random.nextInt(10, 20)
-        (permits).injectInto(semaphoreMock)
-        doNothing().whenever(semaphoreMock).acquire()
-        doCallRealMethod().whenever(semaphoreMock).acquireUninterruptibly()
+        permits.injectInto(semaphore)
+        assertEquals(permits, semaphore.primitiveValue<Int>(Int::class))
 
-        // SUT
-        semaphoreMock.acquireUninterruptibly()
+        every { semaphore.acquire() } returns Unit
 
-        assertEquals(permits, semaphoreMock.primitiveValue<Int>(Int::class))
+        semaphore.acquireUninterruptibly()
 
-        verify(semaphoreMock).acquireUninterruptibly()
-        verify(semaphoreMock).acquire()
-        verifyNoMoreInteractions(semaphoreMock)
+        val result = semaphore.primitiveValue<Int>(Int::class)
+        assertEquals(permits, result)
+
+        verifySequence {
+            semaphore.acquireUninterruptibly()
+            semaphore.acquire()
+        }
     }
 
     @Test
     fun `acquire permit uninterruptibly should not be interruptible`() {
-        whenever(semaphoreMock.acquire())
-                .thenThrow(InterruptedException("Mock exception"))
-                .thenAnswer { Unit }
-        doCallRealMethod().whenever(semaphoreMock).acquireUninterruptibly()
+        every { semaphore.acquire() } throws InterruptedException("Mock exception") andThen { }
 
-        // SUT
-        semaphoreMock.acquireUninterruptibly()
+        semaphore.acquireUninterruptibly()
 
-        verify(semaphoreMock).acquireUninterruptibly()
-        verify(semaphoreMock, times(2)).acquire()
-        verifyNoMoreInteractions(semaphoreMock)
+        verifySequence {
+            semaphore.acquireUninterruptibly()
+            semaphore.acquire()
+            semaphore.acquire()
+        }
+    }
+
+    @Test
+    fun `acquire permit uninterruptibly should set interrupt flag before returning`() {
+        Thread.currentThread().interrupt()
+        every { semaphore.acquire() } throws InterruptedException("Mock exception") andThen {
+            Thread.interrupted()
+        }
+
+        semaphore.acquireUninterruptibly()
+
+        verify(exactly = 2) { semaphore.acquire() }
+
+        assertTrue(Thread.currentThread().isInterrupted)
     }
 
     @Test
     fun `acquire permit uninterruptibly should set interrupt flag if interrupted`() {
-        whenever(semaphoreMock.acquire())
-                .thenThrow(InterruptedException("Mock exception"))
-                .thenAnswer { Unit }
-        doCallRealMethod().whenever(semaphoreMock).acquireUninterruptibly()
+        every { semaphore.acquire() } throws InterruptedException("Mock exception") andThen { }
 
-        // SUT
-        semaphoreMock.acquireUninterruptibly()
+        semaphore.acquireUninterruptibly()
 
         assertTrue(Thread.currentThread().isInterrupted)
     }
@@ -226,14 +250,15 @@ class Assignment_2B_SimpleSemaphoreTest : AssignmentTests() {
     @Test
     fun `release permit with signal`() {
         setPermits(0)
-        val inOrder = inOrder(lockMock, notZeroMock)
 
-        // SUT
         semaphore.release()
 
-        inOrder.verify(lockMock).lock()
-        inOrder.verify(notZeroMock).signal()
-        inOrder.verify(lockMock).unlock()
+        verify {
+            lock.lockInterruptibly()
+            notZero.signal()
+            lock.unlock()
+        }
+
         val expectedAvailablePermits = 1
         assertEquals(
                 "Available permits should be $expectedAvailablePermits",
@@ -244,14 +269,14 @@ class Assignment_2B_SimpleSemaphoreTest : AssignmentTests() {
     @Test
     fun `release permit with no signal`() {
         setPermits(-1)
-        val inOrder = inOrder(lockMock, notZeroMock)
 
-        // SUT
         semaphore.release()
 
-        inOrder.verify(lockMock).lock()
-        inOrder.verify(lockMock).unlock()
-        verify(notZeroMock, never()).signal()
+        verifySequence {
+            lock.lockInterruptibly()
+            lock.unlock()
+        }
+
         val expectedAvailablePermits = 0
         assertEquals(
                 "Available permits should be $expectedAvailablePermits",

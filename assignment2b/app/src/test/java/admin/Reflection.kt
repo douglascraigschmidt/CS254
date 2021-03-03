@@ -2,6 +2,7 @@ package admin
 
 import org.junit.Assert
 import java.lang.reflect.Field
+import java.lang.reflect.Modifier.*
 import kotlin.reflect.KClass
 
 inline fun <reified T> Any.value(vararg types: Class<*>): T {
@@ -113,7 +114,7 @@ fun Class<*>.findField(type: Class<*>, name: String = ""): Field {
             val wasAccessible = it.isAccessible
             try {
                 it.isAccessible = true
-                (name.isBlank() || it.name == name) && (it.type == type)
+                (name.isBlank() || it.name == name) && type.isAssignableFrom(it.type)
             } finally {
                 it.isAccessible = wasAccessible
             }
@@ -170,3 +171,28 @@ inline fun <T> Field.runWithAccess(block: Field.() -> T): T {
     return result
 }
 
+inline fun <reified T> Any.field(): Field? =
+        javaClass.declaredFields.firstOrNull { field: Field ->
+            field.type == T::class.java
+        }
+
+fun Field.hasModifiers(vararg modifiers: String): Boolean {
+    return modifiers.map {
+        modifierFromString(it)
+    }.reduce { acc, modifier ->
+        acc or modifier
+    } and this.modifiers != 0
+}
+
+fun modifierFromString(modifier: String): Int {
+    return when (modifier) {
+        "public" -> PUBLIC
+        "protected" -> PROTECTED
+        "private" -> PRIVATE
+        "static" -> STATIC
+        "final" -> FINAL
+        "transient" -> TRANSIENT
+        "volatile" -> VOLATILE
+        else -> 0x0
+    }
+}

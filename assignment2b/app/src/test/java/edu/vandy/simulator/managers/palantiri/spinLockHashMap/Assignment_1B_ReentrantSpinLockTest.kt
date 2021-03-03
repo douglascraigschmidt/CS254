@@ -18,6 +18,7 @@ import java.util.concurrent.CancellationException
 import java.util.concurrent.atomic.AtomicReference
 import java.util.function.Supplier
 import kotlin.random.Random
+import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull
 
 /**
@@ -154,9 +155,7 @@ class Assignment_1B_ReentrantSpinLockTest : AssignmentTests() {
         every { owner.compareAndSet(null, Thread.currentThread()) } returns false
         // SUT
 
-        assertThrows(CancellationException::class.java) {
-            spinLock.lock(isCancelled)
-        }
+        assertFailsWith<CancellationException> { spinLock.lock(isCancelled) }
 
         verify { isCancelled.get() }
         verify(atLeast = 1) { owner.get() }
@@ -206,9 +205,7 @@ class Assignment_1B_ReentrantSpinLockTest : AssignmentTests() {
         every { owner.get() } returns null
 
         // SUT
-        assertThrows<IllegalMonitorStateException>("Should throw an exception") {
-            spinLock.unlock()
-        }
+        assertFailsWith<IllegalMonitorStateException> { spinLock.unlock() }
 
         verify { owner.get() }
         verify { spinLock.unlock() }

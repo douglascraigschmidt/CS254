@@ -16,6 +16,7 @@ import java.util.concurrent.CancellationException
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.Supplier
 import kotlin.random.Random
+import kotlin.test.assertFailsWith
 
 /**
  * Run with power mock and prepare the Thread
@@ -41,8 +42,8 @@ class Assignment_1B_SpinLockTest : AssignmentTests() {
 
     @Before
     fun before() {
-        owner.injectInto(spinLock)
         runAs(Undergraduate)
+        owner.injectInto(spinLock)
     }
 
     @Test
@@ -96,7 +97,7 @@ class Assignment_1B_SpinLockTest : AssignmentTests() {
         every { spinLock.tryLock() } returns false
         every { isCancelled.get() } returnsMany responses
         every { owner.get() } returns false
-        assertThrows<CancellationException>("Should throw a CancellationException") {
+        assertFailsWith<CancellationException> {
             spinLock.lock(isCancelled)
         }
         verify(exactly = responses.size) {

@@ -58,6 +58,8 @@ open class AssignmentTests(timeoutSeconds: Int = 60) {
         }
     }
 
+    class SimulatedException(msg: String = "Simulated Exception") : RuntimeException(msg)
+
     @Before
     fun setUp() {
         MockKAnnotations.init(this, relaxUnitFun = true)
@@ -151,63 +153,4 @@ open class AssignmentTests(timeoutSeconds: Int = 60) {
             fail(message)
         }
     }
-
-    //TODOx: can't get this to work without getting UnfinishedMockingSessionException
-    //@Rule
-    //@JvmField
-    //var mockito = MockitoJUnit.rule().strictness(Strictness.STRICT_STUBS)
-
-    /**
-     * Example usage:
-     * ```kotlin
-     * val exception = assertThrows<IllegalArgumentException> {
-     *     throw IllegalArgumentException("Talk to a duck")
-     * }
-     * assertEquals("Talk to a duck", exception.message)
-     * ```
-     * @see Assertions.assertThrows
-     */
-    inline fun <reified T : Throwable> assertThrows(executable: () -> Unit): T =
-            assertThrows(runCatching(executable))
-
-    /**
-     * Example usage:
-     * ```kotlin
-     * val exception = assertThrows<IllegalArgumentException>("Should throw an Exception") {
-     *     throw IllegalArgumentException("Talk to a duck")
-     * }
-     * assertEquals("Talk to a duck", exception.message)
-     * ```
-     * @see Assertions.assertThrows
-     */
-    inline fun <reified T : Throwable> assertThrows(message: String, executable: () -> Unit): T =
-            assertThrows(message, runCatching(executable))
-
-    /**
-     * Example usage:
-     * ```kotlin
-     * val exception = assertThrows<IllegalArgumentException>(runCatching {
-     *     throw IllegalArgumentException("Talk to a duck")
-     * })
-     * assertEquals("Talk to a duck", exception.message)
-     * ```
-     * @see Assertions.assertThrows
-     */
-    inline fun <reified T : Throwable> assertThrows(result: Result<*>): T =
-            Assert.assertThrows(T::class.java) { result.getOrThrow() }
-
-    /**
-     * Example usage:
-     * ```kotlin
-     * val exception = assertThrows<IllegalArgumentException>("Should throw an Exception") {
-     *     runCatching {
-     *        throw IllegalArgumentException("Talk to a duck")
-     *     }
-     *  }
-     * assertEquals("Talk to a duck", exception.message)
-     * ```
-     * @see Assertions.assertThrows
-     */
-    inline fun <reified T : Throwable> assertThrows(message: String, result: Result<*>): T =
-            Assert.assertThrows(message, T::class.java) { result.getOrThrow() }
 }

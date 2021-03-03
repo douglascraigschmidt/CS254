@@ -20,6 +20,7 @@ import java.util.function.Predicate
 import java.util.stream.Collector
 import java.util.stream.Stream
 import kotlin.collections.HashMap
+import kotlin.test.assertFailsWith
 
 class Assignment_2B_ReentrantLockHashMapSimpleSemaphoreMgrTest : AssignmentTests(0) {
     companion object {
@@ -59,8 +60,6 @@ class Assignment_2B_ReentrantLockHashMapSimpleSemaphoreMgrTest : AssignmentTests
     @SpyK
     private var palantirList = mutableListOf<Palantir>()
 
-    private class SimulatedException : RuntimeException("Simulated exception")
-
     @Before
     fun before() {
         repeat(PALANTIR_COUNT) {
@@ -86,21 +85,7 @@ class Assignment_2B_ReentrantLockHashMapSimpleSemaphoreMgrTest : AssignmentTests
 
         palantirList.injectInto(manager)
         semaphore.injectInto(manager)
-
-        // Handles the case where the user has declared the lock field as
-        // either Lock or ReentrantLock.
-        injectLockField(lock, manager)
-    }
-
-    private fun injectLockField(lockMock: ReentrantLock, manager: Any) {
-        val firstField = manager.firstField<ReentrantLock>()
-        var field = firstField
-        if (field != null) {
-            field[manager] = lockMock
-        } else {
-            field = manager.firstField<Lock>()!!
-            field[manager] = lockMock
-        }
+        (lock as Lock).injectInto(manager)
     }
 
     @Test
@@ -292,9 +277,7 @@ class Assignment_2B_ReentrantLockHashMapSimpleSemaphoreMgrTest : AssignmentTests
         every { semaphore.acquire() } throws SimulatedException()
 
         // SUT
-        assertThrows(SimulatedException::class.java) {
-            manager.acquire()
-        }
+        assertFailsWith<SimulatedException> { manager.acquire() }
 
         verify { semaphore.acquire() }
         confirmVerified(lock)
@@ -306,9 +289,7 @@ class Assignment_2B_ReentrantLockHashMapSimpleSemaphoreMgrTest : AssignmentTests
         every { lock.lockInterruptibly() } throws SimulatedException()
 
         // SUT
-        assertThrows(SimulatedException::class.java) {
-            manager.acquire()
-        }
+        assertFailsWith<SimulatedException> { manager.acquire() }
 
         verify { semaphore.acquire() }
 
@@ -369,9 +350,7 @@ class Assignment_2B_ReentrantLockHashMapSimpleSemaphoreMgrTest : AssignmentTests
         val palantir = Palantir(manager)
 
         // SUT
-        assertThrows(SimulatedException::class.java) {
-            manager.release(palantir)
-        }
+        assertFailsWith<SimulatedException> { manager.release(palantir) }
 
         verify { lock.lockInterruptibly() }
         confirmVerified(lock, semaphore, palantirMap)
@@ -384,9 +363,7 @@ class Assignment_2B_ReentrantLockHashMapSimpleSemaphoreMgrTest : AssignmentTests
         every { palantirMap.put(palantir, true) } returns null
 
         // SUT
-        assertThrows(IllegalArgumentException::class.java) {
-            manager.release(palantir)
-        }
+        assertFailsWith<IllegalArgumentException> { manager.release(palantir) }
 
         verifyOrder {
             lock.lockInterruptibly()
@@ -398,26 +375,11 @@ class Assignment_2B_ReentrantLockHashMapSimpleSemaphoreMgrTest : AssignmentTests
 
     @Test
     fun `release handles a null palantir`() {
-        assertThrows(IllegalArgumentException::class.java) {
+        assertFailsWith<IllegalArgumentException> {
             manager.release(null)
         }
         confirmVerified(lock, semaphore, palantirMap)
     }
-
-//    @Test
-//    fun `release does not unlock the lock if the lock call is interrupted`() {
-//        doThrow(SimulatedException()).whenever(lockMock).lockInterruptibly()
-//
-//        val palantir = Palantir(manager)
-//
-//        // SUT
-//        assertThrows(SimulatedException::class.java) {
-//            manager.release(palantir)
-//        }
-//
-//        verify(lockMock).lockInterruptibly()
-//        verifyNoMoreInteractions(lockMock)
-//    }
 
     private fun lockAllPalantiri() {
         repeat(PALANTIR_COUNT) {
