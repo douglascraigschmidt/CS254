@@ -14,8 +14,7 @@ import edu.vandy.simulator.utils.Assignment;
  * A PalantiriManager implemented using a SpinLock, a Semaphore, and a
  * HashMap.
  */
-public class SpinLockHashMapMgr
-        extends PalantiriManager {
+public class SpinLockHashMapMgr extends PalantiriManager {
     /**
      * Debugging tag used by the Android logger.
      */

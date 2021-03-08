@@ -14,8 +14,7 @@ import edu.vandy.simulator.managers.palantiri.PalantiriManager;
  * This implementation is intentionally simple and inefficient since
  * it's not meant for use in production code.
  */
-public class ArrayBlockingQueueMgr
-        extends PalantiriManager {
+public class ArrayBlockingQueueMgr extends PalantiriManager {
     /**
      * Debugging tag used by the Android logger.
      */

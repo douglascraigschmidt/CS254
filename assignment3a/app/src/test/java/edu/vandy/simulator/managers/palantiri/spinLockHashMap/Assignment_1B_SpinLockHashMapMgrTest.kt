@@ -3,6 +3,7 @@ package edu.vandy.simulator.managers.palantiri.spinLockHashMap
 import admin.AssignmentTests
 import admin.injectInto
 import admin.value
+import com.nhaarman.mockitokotlin2.any
 import edu.vandy.simulator.managers.palantiri.Palantir
 import edu.vandy.simulator.utils.Assignment.isGraduate
 import edu.vandy.simulator.utils.Assignment.isUndergraduate
@@ -257,25 +258,15 @@ class Assignment_1B_SpinLockHashMapMgrTest : AssignmentTests(0) {
         val palantir = mockk<Palantir>()
 
         every { palantiriMap.replace(palantir, true) } returns false
-        every { palantiriMap.put(palantir, true) } returns false
 
         // SUT
         manager.release(palantir)
 
-        try {
-            verifyOrder {
-                cancellableLockMock.lock(any())
-                palantiriMap.replace(palantir, true)
-                cancellableLockMock.unlock()
-                semaphoreMock.release()
-            }
-        } catch (t: Throwable) {
-            verifyOrder {
-                cancellableLockMock.lock(any())
-                palantiriMap[palantir] = true
-                cancellableLockMock.unlock()
-                semaphoreMock.release()
-            }
+        verifyOrder {
+            cancellableLockMock.lock(any())
+            palantiriMap.replace(palantir, true)
+            cancellableLockMock.unlock()
+            semaphoreMock.release()
         }
 
         confirmVerified(palantiriMap, palantir, cancellableLockMock, semaphoreMock)
@@ -289,23 +280,14 @@ class Assignment_1B_SpinLockHashMapMgrTest : AssignmentTests(0) {
         val palantir = mockk<Palantir>()
 
         every { palantiriMap.replace(palantir, true) } returns true
-        every { palantiriMap.put(palantir, true) } returns true
 
         // SUT
         assertFailsWith<IllegalArgumentException> { manager.release(palantir) }
 
-        try {
-            verifyOrder {
-                cancellableLockMock.lock(any())
-                palantiriMap.replace(palantir, true)
-                cancellableLockMock.unlock()
-            }
-        } catch (t: Throwable) {
-            verifyOrder {
-                cancellableLockMock.lock(any())
-                palantiriMap[palantir] = true
-                cancellableLockMock.unlock()
-            }
+        verifyOrder {
+            cancellableLockMock.lock(any())
+            palantiriMap.replace(palantir, true)
+            cancellableLockMock.unlock()
         }
 
         verify(exactly = 0) { semaphoreMock.release() }

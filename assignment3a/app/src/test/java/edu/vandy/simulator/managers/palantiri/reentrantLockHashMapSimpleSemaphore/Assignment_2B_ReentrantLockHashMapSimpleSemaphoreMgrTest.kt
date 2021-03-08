@@ -1,7 +1,6 @@
 package edu.vandy.simulator.managers.palantiri.reentrantLockHashMapSimpleSemaphore
 
 import admin.AssignmentTests
-import admin.firstField
 import admin.injectInto
 import admin.value
 import edu.vandy.simulator.managers.palantiri.Palantir
@@ -22,7 +21,7 @@ import java.util.stream.Stream
 import kotlin.collections.HashMap
 import kotlin.test.assertFailsWith
 
-class Assignment_2B_ReentrantLockHashMapSimpleSemaphoreMgrTest : AssignmentTests(0) {
+class Assignment_2B_ReentrantLockHashMapSimpleSemaphoreMgrTest : AssignmentTests() {
     companion object {
         private const val PALANTIR_COUNT = 5
     }
@@ -208,6 +207,7 @@ class Assignment_2B_ReentrantLockHashMapSimpleSemaphoreMgrTest : AssignmentTests
             lock.unlock()
         }
 
+        verify(exactly = 0) { palantirMap.keys }
         verify(exactly = 0) { lock.lock() }
 
         verifyOrder {
@@ -252,6 +252,8 @@ class Assignment_2B_ReentrantLockHashMapSimpleSemaphoreMgrTest : AssignmentTests
             streamEntrySet.map(any<Function<Map.Entry<Palantir, Boolean>, Palantir>>())
         }
 
+        verify(exactly = 0) { palantirMap.keys }
+
         try {
             verify { streamPalantir.findFirst() }
         } catch (e: Exception) {
@@ -264,6 +266,8 @@ class Assignment_2B_ReentrantLockHashMapSimpleSemaphoreMgrTest : AssignmentTests
             streamEntrySet.filter(any())
             streamEntrySet.map(any<Function<Map.Entry<Palantir, Boolean>, Palantir>>())
         }
+
+        verify(exactly = 0) { palantirMap.keys }
 
         try {
             verify { streamPalantir.findFirst() }
@@ -313,7 +317,7 @@ class Assignment_2B_ReentrantLockHashMapSimpleSemaphoreMgrTest : AssignmentTests
             semaphore.release()
             lock.unlock()
             lock.lockInterruptibly()
-            palantirMap[any()] = true
+            palantirMap.replace(any(), true)
         }
 
         val unlocked = palantirMap.values.count { it }
@@ -330,13 +334,13 @@ class Assignment_2B_ReentrantLockHashMapSimpleSemaphoreMgrTest : AssignmentTests
         val palantir = palantirList[0]
         clearMocks(palantirList)
 
-        every { palantirMap.put(palantir, true) } returns false
+        every { palantirMap.replace(palantir, true) } returns false
 
         manager.release(palantir)
 
         verifyOrder {
             lock.lockInterruptibly()
-            palantirMap[palantir] = true
+            palantirMap.replace(palantir, true)
             lock.unlock()
             semaphore.release()
         }
@@ -360,14 +364,14 @@ class Assignment_2B_ReentrantLockHashMapSimpleSemaphoreMgrTest : AssignmentTests
     fun `release handles an invalid palantir`() {
         val palantir = Palantir(manager)
 
-        every { palantirMap.put(palantir, true) } returns null
+        every { palantirMap.replace(palantir, true) } returns null
 
         // SUT
         assertFailsWith<IllegalArgumentException> { manager.release(palantir) }
 
         verifyOrder {
             lock.lockInterruptibly()
-            palantirMap[palantir] = true
+            palantirMap.replace(palantir, true)
             lock.unlock()
         }
         confirmVerified(lock, semaphore, palantirMap)

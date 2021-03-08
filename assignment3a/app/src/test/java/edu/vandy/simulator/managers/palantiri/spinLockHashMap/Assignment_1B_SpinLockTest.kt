@@ -2,6 +2,7 @@ package edu.vandy.simulator.managers.palantiri.spinLockHashMap
 
 import admin.AssignmentTests
 import admin.injectInto
+import admin.value
 import edu.vandy.simulator.utils.Student.Type.Undergraduate
 import io.mockk.confirmVerified
 import io.mockk.every
@@ -17,6 +18,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.Supplier
 import kotlin.random.Random
 import kotlin.test.assertFailsWith
+import kotlin.test.assertNotNull
 
 /**
  * Run with power mock and prepare the Thread
@@ -44,6 +46,12 @@ class Assignment_1B_SpinLockTest : AssignmentTests() {
     fun before() {
         runAs(Undergraduate)
         owner.injectInto(spinLock)
+    }
+
+    @Test
+    fun `member are properly initialized`() {
+        val spinLock = SpinLock()
+        assertNotNull(spinLock.value(AtomicBoolean::class.java))
     }
 
     @Test

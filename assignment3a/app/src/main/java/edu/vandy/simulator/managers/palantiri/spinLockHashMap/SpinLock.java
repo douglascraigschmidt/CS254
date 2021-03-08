@@ -8,8 +8,7 @@ import java.util.function.Supplier;
  * This class emulates a "compare and swap"-style spin lock with
  * non-recursive semantics.
  */
-class SpinLock
-        implements CancellableLock {
+class SpinLock implements CancellableLock {
     /**
      * Define an AtomicBoolean that's used as the basis for an atomic
      * compare-and-swap.  The default state of the spinlock should be

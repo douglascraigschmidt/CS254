@@ -107,7 +107,7 @@ public class ReentrantLockHashMapSimpleSemaphoreMgr extends PalantiriManager {
         // TODO -- you fill in here.
         
 
-        // Initialize a new ReentrantLock.
+        // Initialize a new ReentrantLock (which has a "non-fair" implementation).
         // TODO -- you fill in here.
         
     }
