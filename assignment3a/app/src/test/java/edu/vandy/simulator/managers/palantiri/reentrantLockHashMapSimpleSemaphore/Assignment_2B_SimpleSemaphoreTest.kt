@@ -283,4 +283,19 @@ class Assignment_2B_SimpleSemaphoreTest : AssignmentTests() {
                 expectedAvailablePermits,
                 semaphore.availablePermits())
     }
+
+    @Test
+    fun `release permit with only when positive`() {
+        setPermits(1)
+
+        semaphore.release()
+
+        verifySequence {
+            lock.lockInterruptibly()
+            notZero.signal()
+            lock.unlock()
+        }
+
+        assertEquals(getPermits(), 2)
+    }
 }

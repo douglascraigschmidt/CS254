@@ -3,20 +3,22 @@ package edu.vandy.simulator.managers.beings.completionService
 import admin.AssignmentTests
 import admin.ReflectionHelper
 import com.nhaarman.mockitokotlin2.*
+import com.nhaarman.mockitokotlin2.verify
 import edu.vandy.simulator.utils.Student.Type.Graduate
 import edu.vandy.simulator.utils.Student.Type.Undergraduate
+import io.mockk.*
 import org.junit.Assert
 import org.junit.Test
 import org.mockito.ArgumentMatchers
 import org.mockito.InjectMocks
 import org.mockito.Mock
+import org.mockito.MockedStatic
 import java.util.*
-import java.util.concurrent.CompletionService
-import java.util.concurrent.ExecutorService
-import java.util.concurrent.Future
+import java.util.concurrent.*
 import java.util.stream.IntStream
 import kotlin.math.min
 import kotlin.test.assertFailsWith
+import kotlin.test.assertSame
 
 class Assignment_3A_ExecutorCompletionServiceMgrTest : AssignmentTests() {
     companion object {
@@ -73,6 +75,15 @@ class Assignment_3A_ExecutorCompletionServiceMgrTest : AssignmentTests() {
         val executorService = mManagerMock.createExecutorService()
 
         Assert.assertNotNull(executorService)
+    }
+
+    @Test
+    fun testCreateExecutorService2() {
+        mockkStatic(Executors::class)
+        val executor = spyk<ExecutorCompletionServiceMgr>()
+        val service = mockk<ExecutorService>()
+        every { Executors.newCachedThreadPool() } returns service
+        assertSame(service, executor.createExecutorService())
     }
 
     @Test
