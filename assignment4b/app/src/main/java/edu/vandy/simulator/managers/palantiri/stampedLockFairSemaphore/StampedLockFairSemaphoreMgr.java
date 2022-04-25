@@ -4,6 +4,7 @@ import android.util.Log;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.locks.StampedLock;
@@ -107,27 +108,52 @@ public class StampedLockFairSemaphoreMgr
     @Override
     @NotNull
     public Palantir acquire() throws InterruptedException {
-        // Acquire the FairSemaphore interruptibly and then use an
-        // Iterator to iterate through the HashMap in a thread-safe
-        // manner to find the first key in the HashMap whose value is
-        // "true" (which indicates it's available for use).  Replace
-        // the value of this key with "false" to indicate the Palantir
-        // isn't available and then return that palantir to the
-        // client.
-        // 
-        // This implementation should demonstrate StampedLock's
-        // support for upgrading a readLock to a writeLock, as well as
-        // for releasing a readLock and acquiring a writeLock.  All
-        // locking of StampedLocks should be interruptible.  You'll
-        // need to use an Iterator instead of a for-each loop so that
-        // you can restart your search at the beginning of the HashMap
-        // if you're unable to atomically upgrade the readlock to a
-        // writelock.  This code is tricky, so please carefully read
-        // the StampedLock "upgrade" example that's described at
+        // This code is tricky, so please carefully read the
+        // StampedLock "upgrade" example that's described at
         // docs.oracle.com/javase/8/docs/api/java/util/concurrent/locks/StampedLock.html.
 
-        // TODO -- you fill in here.
-        
+        // Grad students must use Java streams.
+        if (Assignment.isGraduate()) {
+            // Acquire the FairSemaphore interruptibly and then use
+            // Java streams to find the first key in the HashMap whose
+            // value is "true" (which indicates it's available for
+            // use).  Replace the value of this key with "false" to
+            // indicate the Palantir isn't available and then return
+            // that palantir to the client.
+            // 
+            // This implementation should demonstrate StampedLock's
+            // support for upgrading a readLock to a writeLock, as
+            // well as for releasing a readLock and acquiring a
+            // writeLock.  All locking of StampedLocks should be
+            // interruptible.  You'll need to use a for-each loop in
+            // conjunction with Java streams so you can restart your
+            // search at the beginning of the HashMap if you're unable
+            // to atomically upgrade the readlock to a writelock.
+
+            // TODO -- you fill in here.
+            
+
+        // Undergrad students must use a Java iterator.
+        } else if (Assignment.isUndergraduate()) {
+            // Acquire the FairSemaphore interruptibly and then use an
+            // Iterator to iterate through the HashMap to find the
+            // first key in the HashMap whose value is "true" (which
+            // indicates it's available for use).  Replace the value
+            // of this key with "false" to indicate the Palantir isn't
+            // available and then return that palantir to the client.
+            // 
+            // This implementation should demonstrate StampedLock's
+            // support for upgrading a readLock to a writeLock, as
+            // well as for releasing a readLock and acquiring a
+            // writeLock.  All locking of StampedLocks should be
+            // interruptible.  You'll need to use an Iterator instead
+            // of a for-each loop so that you can restart your search
+            // at the beginning of the HashMap if you're unable to
+            // atomically upgrade the readlock to a writelock.
+
+            // TODO -- you fill in here.
+            
+        }
 
         // This method either succeeds by returning a Palantir, or
         // fails if interrupted by a shutdown.  In ether case,

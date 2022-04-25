@@ -161,7 +161,7 @@ public class ExecutorCompletionServiceMgr
                 // TODO -- you fill in here.
                 
             } else if (Assignment.isGraduate()) {
-                // Loop through all the beings.
+                // Use a Java stream to process all the beings.
                 // TODO -- you fill in here.
                 
             }
